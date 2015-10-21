@@ -74,12 +74,7 @@ public final class Locator implements AutoCloseable {
 
     public Service service(final String name) {
         logger.info("Creating service " + name);
-        return Service.create(name, bootstrap, new Supplier<SocketAddress>() {
-            @Override
-            public SocketAddress get() {
-                return resolve(name).getEndpoint();
-            }
-        }, resolve(name).getApi());
+        return Service.create(name, bootstrap, () -> resolve(name).getEndpoint(), resolve(name).getApi());
     }
 
     @Override
