@@ -81,14 +81,12 @@ public class Service implements AutoCloseable {
             channel.closeFuture().addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(final ChannelFuture future) throws Exception {
-                    future.channel().eventLoop().schedule(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (!closed.get() && !bootstrap.group().isShuttingDown()) {
-                                connect(bootstrap, endpoint, handler);
-                            }
-                        }
-                    }, 2, TimeUnit.SECONDS);
+                    future.channel().eventLoop().schedule(
+                            () -> {
+                                if (!closed.get() && !bootstrap.group().isShuttingDown()) {
+                                    connect(bootstrap, endpoint, handler);
+                                }
+                            }, 2, TimeUnit.SECONDS);
                 }
             });
         } catch (Exception e) {
