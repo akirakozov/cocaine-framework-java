@@ -27,6 +27,10 @@ public class TransactionTree {
                 .findFirst().get().getKey();
     }
 
+    public boolean isEmpty() {
+        return transactions.isEmpty();
+    }
+
     public static class TransactionInfo {
         private final String messageName;
         private final TransactionTree tree;
