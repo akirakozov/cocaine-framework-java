@@ -4,8 +4,8 @@ import java.io.EOFException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import cocaine.message.Message;
-import cocaine.msgpack.MessageTemplate;
+import cocaine.messagev12.MessageV12;
+import cocaine.msgpack.MessageV12Template;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -32,7 +32,7 @@ public class MessageDecoder extends ByteToMessageDecoder {
 
         ByteBuffer buffer = in.nioBuffer();
         try {
-            Message message = pack.read(buffer, MessageTemplate.getInstance());
+            MessageV12 message = pack.read(buffer, MessageV12Template.getInstance());
             logger.debug("Message has been successfully decoded: " + message);
             in.readerIndex(in.readerIndex() + buffer.position());
             out.add(message);

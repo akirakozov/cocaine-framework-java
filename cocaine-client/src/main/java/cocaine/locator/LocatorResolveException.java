@@ -1,4 +1,6 @@
-package cocaine;
+package cocaine.locator;
+
+import cocaine.CocaineException;
 
 import java.net.SocketAddress;
 

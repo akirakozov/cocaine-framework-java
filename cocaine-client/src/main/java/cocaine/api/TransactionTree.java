@@ -1,5 +1,7 @@
 package cocaine.api;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -7,6 +9,8 @@ import java.util.Map;
  */
 public class TransactionTree {
     private final Map<Integer, TransactionInfo> transactions;
+    public static TransactionTree EMPTY = new TransactionTree(Collections.emptyMap());
+    public static TransactionTree SIMPLE_VALUE = createSimpleValueTree();
 
     public TransactionTree(Map<Integer, TransactionInfo> transactions) {
         this.transactions = transactions;
@@ -23,12 +27,20 @@ public class TransactionTree {
 
     public int getMessageId(String name) {
         return transactions.entrySet().stream()
-                .filter( it -> it.getValue().messageName.equals(name))
+                .filter(it -> it.getValue().messageName.equals(name))
                 .findFirst().get().getKey();
     }
 
     public boolean isEmpty() {
         return transactions.isEmpty();
+    }
+
+    private static TransactionTree createSimpleValueTree() {
+        // {0: ['value', {}], 1: ['error', {}]}
+        Map<Integer, TransactionInfo> tree = new HashMap<>();
+        tree.put(0, new TransactionInfo("value", EMPTY));
+        tree.put(1, new TransactionInfo("error", EMPTY));
+        return new TransactionTree(tree);
     }
 
     public static class TransactionInfo {
