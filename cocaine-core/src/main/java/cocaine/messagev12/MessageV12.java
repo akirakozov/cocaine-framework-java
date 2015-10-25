@@ -50,4 +50,8 @@ public class MessageV12 {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "session " + session + ", type " + type;
+     }
 }
