@@ -39,13 +39,17 @@ public class SessionsV12 {
         return session;
     }
 
+    public SessionV12<Value> create(TransactionTree rx, TransactionTree tx, CocaineProtocol protocol) {
+        return create(rx, tx, protocol, new ValueIdentityPayloadDeserializer());
+    }
+
     public void onEvent(MessageV12 msg) {
         SessionV12 session = sessions.get(msg.getSession());
         if (session != null) {
             session.rx().onRead(msg.getType(), msg.getPayload());
         } else {
-            logger.debug("Unknown mesage for service: " + service + ", message typ: " +
-                    msg.getType() + ", session:" + msg.getSession());
+            logger.debug("Unknown mesage for service " + service
+                    + ", session:" + msg.getSession() + ", type: " + msg.getType());
         }
     }
 

@@ -13,14 +13,16 @@ public class ServiceMessageHandlerV12 extends ChannelInboundHandlerAdapter {
     private static final Logger logger = Logger.getLogger(ServiceMessageHandlerV12.class);
 
     private final SessionsV12 sessions;
+    private final String serviceName;
 
-    public ServiceMessageHandlerV12(SessionsV12 sessions) {
+    public ServiceMessageHandlerV12(String serviceName, SessionsV12 sessions) {
+        this.serviceName = serviceName;
         this.sessions = sessions;
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        logger.info("Handling message: " + msg);
+        logger.info("Handling message for service " + serviceName + ": " + msg);
 
         MessageV12 message = (MessageV12) msg;
         sessions.onEvent(message);
