@@ -16,6 +16,7 @@ import cocaine.netty.MessageDecoder;
 import cocaine.netty.MessageEncoder;
 import cocaine.netty.MessagePackableEncoder;
 import cocaine.service.ServiceV12;
+import cocaine.session.SessionV12;
 import com.google.common.base.Suppliers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -95,7 +96,8 @@ public final class Locator implements AutoCloseable {
     private ServiceInfoV12 resolve(String name) {
         logger.info("Resolving service info for " + name);
         try {
-            Value paylaod = service.invoke("resolve", name).rx().get();
+            SessionV12<Value> session = service.invoke("resolve", name);
+            Value paylaod = session.rx().get();
             return new Converter(paylaod).read(ServiceInfoV12Template.create(name));
             //byte[] result = service.invoke("resolve", name).toBlocking().single();
             //return pack.read(result, ServiceInfoTemplate.create(name));

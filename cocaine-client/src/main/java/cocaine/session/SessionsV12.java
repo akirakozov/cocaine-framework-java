@@ -27,18 +27,18 @@ public class SessionsV12 {
         this.sessions = new ConcurrentHashMap<>();
     }
 
-    public SessionV12 create(TransactionTree rx, TransactionTree tx) {
+    public <T> SessionV12<T> create(TransactionTree rx, TransactionTree tx) {
         long id = counter.getAndIncrement();
-        Subject<Value, Value> subject = ReplaySubject.create();
 
         logger.debug("Creating new session: " + id);
-        SessionV12 session = new SessionV12(id, rx, tx, subject);
+        SessionV12 session = new SessionV12(id, service, rx, tx, new PrimitiveProtocol());
         sessions.put(id, session);
         return session;
     }
 
     public void onEvent(MessageV12 msg) {
         SessionV12 session = sessions.get(msg.getSession());
+        // TODO: handle unknown (null) session
         session.rx().onRead(msg.getType(), msg.getPayload());
     }
 

@@ -52,7 +52,7 @@ public class ServiceV12 implements  AutoCloseable {
         return invoke(method, Arrays.asList(args));
     }
 
-    public SessionV12 invoke(String method, List<Object> args) {
+    public <T> SessionV12<T> invoke(String method, List<Object> args) {
         logger.debug("Invoking " + method + "(" + Joiner.on(", ").join(args) + ") asynchronously");
 
         SessionV12 session = sessions.create(api.getReceiveTree(method), api.getTransmitTree(method));

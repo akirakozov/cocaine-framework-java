@@ -1,24 +1,26 @@
 package cocaine.session;
 
 import cocaine.api.TransactionTree;
-import org.msgpack.type.Value;
-import rx.subjects.Subject;
 
 /**
  * @author akirakozov
  */
-public class SessionV12 {
+public class SessionV12<T> {
     private final long id;
     private final ReceiveChannel rx;
     private final TransmitChannel tx;
 
-    public SessionV12(long id, TransactionTree rx, TransactionTree tx, Subject<Value, Value> subject) {
+    public SessionV12(
+            long id, String serviceName,
+            TransactionTree rx, TransactionTree tx,
+            CocaineProtocol protocol)
+    {
         this.id = id;
-        this.rx = new ReceiveChannel(rx, subject);
+        this.rx = new ReceiveChannel(serviceName, rx, protocol);
         this.tx = new TransmitChannel(tx);
     }
 
-    public ReceiveChannel rx() {
+    public ReceiveChannel<T> rx() {
         return rx;
     }
 
