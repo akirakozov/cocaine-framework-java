@@ -27,11 +27,14 @@ public class SessionsV12 {
         this.sessions = new ConcurrentHashMap<>();
     }
 
-    public <T> SessionV12<T> create(TransactionTree rx, TransactionTree tx) {
+    public <T> SessionV12<T> create(
+            TransactionTree rx, TransactionTree tx,
+            CocaineProtocol protocol, CocainePayloadDeserializer<T> deserializer)
+    {
         long id = counter.getAndIncrement();
 
         logger.debug("Creating new session: " + id);
-        SessionV12 session = new SessionV12(id, service, rx, tx, new PrimitiveProtocol());
+        SessionV12 session = new SessionV12(id, service, rx, tx, protocol, deserializer);
         sessions.put(id, session);
         return session;
     }

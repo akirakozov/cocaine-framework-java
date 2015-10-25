@@ -1,38 +1,53 @@
 package cocaine.session;
 
+import cocaine.ServiceException;
 import cocaine.api.TransactionTree;
 import cocaine.api.TransactionTree.TransactionInfo;
+import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
 import rx.subjects.ReplaySubject;
 import rx.subjects.Subject;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author akirakozov
  */
 public class ReceiveChannel<T> {
+    private static final Logger logger = Logger.getLogger(ReceiveChannel.class);
+
     private TransactionTree rxTree;
     private final Subject<ResultMessage, ResultMessage> subject;
     private final AtomicBoolean isDone;
     private final CocaineProtocol protocol;
+    private final CocainePayloadDeserializer<T> deserializer;
     private final String serviceName;
 
     public ReceiveChannel(
             String serviceName,
             TransactionTree rxTree,
-            CocaineProtocol protocol)
+            CocaineProtocol protocol,
+            CocainePayloadDeserializer<T> deserializer)
     {
         this.serviceName = serviceName;
         this.rxTree = rxTree;
         this.subject = ReplaySubject.create();
         this.isDone = new AtomicBoolean(false);
         this.protocol = protocol;
+        this.deserializer = deserializer;
     }
 
     public T get() {
         ResultMessage msg = subject.toBlocking().first();
-        return (T) protocol.handle(serviceName, msg.messageType, msg.payload);
+        Value payload = protocol.handle(serviceName, msg.messageType, msg.payload);
+        try {
+            return deserializer.deserialize(msg.messageType, payload);
+        } catch (IOException e) {
+            logger.error(
+                    "Couldn't deserialize result of message " + msg.messageType + ", " + e.getMessage(), e);
+            throw new ServiceException(serviceName, e.getMessage());
+        }
     }
 
     void onRead(int type, Value payload) {

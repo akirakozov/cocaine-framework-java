@@ -13,10 +13,11 @@ public class SessionV12<T> {
     public SessionV12(
             long id, String serviceName,
             TransactionTree rx, TransactionTree tx,
-            CocaineProtocol protocol)
+            CocaineProtocol protocol,
+            CocainePayloadDeserializer deserializer)
     {
         this.id = id;
-        this.rx = new ReceiveChannel(serviceName, rx, protocol);
+        this.rx = new ReceiveChannel(serviceName, rx, protocol, deserializer);
         this.tx = new TransmitChannel(tx);
     }
 
