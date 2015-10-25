@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
  * @author akirakozov
  */
 public class ServiceMessageHandlerV12 extends ChannelInboundHandlerAdapter {
-    private static final Logger logger = Logger.getLogger(ServiceMessageHandler.class);
+    private static final Logger logger = Logger.getLogger(ServiceMessageHandlerV12.class);
 
     private final SessionsV12 sessions;
 
