@@ -3,6 +3,8 @@ package cocaine.service;
 import cocaine.CocaineException;
 import cocaine.api.ServiceApiV12;
 import cocaine.netty.ServiceMessageHandlerV12;
+import cocaine.session.CocainePayloadDeserializer;
+import cocaine.session.CocaineProtocol;
 import cocaine.session.SessionV12;
 import cocaine.session.SessionsV12;
 import com.google.common.base.Joiner;
@@ -48,14 +50,23 @@ public class ServiceV12 implements  AutoCloseable {
         return new ServiceV12(name, api, bootstrap, endpoint);
     }
 
-    public SessionV12 invoke(String method, Object... args) {
-        return invoke(method, Arrays.asList(args));
+    public <T> SessionV12<T> invoke(
+            String method, CocaineProtocol protocol,
+            CocainePayloadDeserializer<T> deserializer, Object... args) {
+        return invoke(method, Arrays.asList(args), protocol, deserializer);
     }
 
-    public <T> SessionV12<T> invoke(String method, List<Object> args) {
+    public <T> SessionV12<T> invoke(
+            String method, List<Object> args,
+            CocaineProtocol protocol, CocainePayloadDeserializer<T> deserializer)
+    {
         logger.debug("Invoking " + method + "(" + Joiner.on(", ").join(args) + ") asynchronously");
 
-        SessionV12 session = sessions.create(api.getReceiveTree(method), api.getTransmitTree(method));
+        SessionV12<T> session = sessions.create(
+                api.getReceiveTree(method),
+                api.getTransmitTree(method),
+                protocol,
+                deserializer);
         int requestedMethod = api.getMessageId(method);
         channel.write(new InvocationRequest(requestedMethod, session.getId(), args));
 
