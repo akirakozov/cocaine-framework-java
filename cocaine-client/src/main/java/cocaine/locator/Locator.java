@@ -96,9 +96,8 @@ public final class Locator implements AutoCloseable {
     private ServiceInfoV12 resolve(String name) {
         logger.info("Resolving service info for " + name);
         try {
-            SessionV12<Value> session = service.invoke("resolve", name);
-            Value paylaod = session.rx().get();
-            return new Converter(paylaod).read(ServiceInfoV12Template.create(name));
+            SessionV12<Value> session = service.invoke("resolve", new PrimitiveProtocol(), name);
+            return new Converter(session.rx().get()).read(ServiceInfoV12Template.create(name));
             //byte[] result = service.invoke("resolve", name).toBlocking().single();
             //return pack.read(result, ServiceInfoTemplate.create(name));
         } catch (Exception e) {

@@ -3,10 +3,7 @@ package cocaine.service;
 import cocaine.CocaineException;
 import cocaine.api.ServiceApiV12;
 import cocaine.netty.ServiceMessageHandlerV12;
-import cocaine.session.CocainePayloadDeserializer;
-import cocaine.session.CocaineProtocol;
-import cocaine.session.SessionV12;
-import cocaine.session.SessionsV12;
+import cocaine.session.*;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import io.netty.bootstrap.Bootstrap;
@@ -16,6 +13,7 @@ import io.netty.channel.ChannelFutureListener;
 import org.apache.log4j.Logger;
 import org.msgpack.MessagePackable;
 import org.msgpack.packer.Packer;
+import org.msgpack.type.Value;
 import org.msgpack.unpacker.Unpacker;
 
 import java.io.IOException;
@@ -43,17 +41,19 @@ public class ServiceV12 implements  AutoCloseable {
         this.sessions = new SessionsV12(name);
         this.api = api;
         this.closed = new AtomicBoolean(false);
-        connect(bootstrap, endpoint, new ServiceMessageHandlerV12(sessions));
+        connect(bootstrap, endpoint, new ServiceMessageHandlerV12(name, sessions));
     }
 
     public static ServiceV12 create(String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint, ServiceApiV12 api) {
         return new ServiceV12(name, api, bootstrap, endpoint);
     }
 
-    public <T> SessionV12<T> invoke(
-            String method, CocaineProtocol protocol,
-            CocainePayloadDeserializer<T> deserializer, Object... args) {
-        return invoke(method, Arrays.asList(args), protocol, deserializer);
+    public SessionV12<Value> invoke(String method, CocaineProtocol protocol, Object... args) {
+        return invoke(method, Arrays.asList(args), protocol);
+    }
+
+    public SessionV12<Value> invoke(String method, List<Object> args, CocaineProtocol protocol) {
+        return invoke(method, args, protocol, new ValueIdentityPayloadDeserializer());
     }
 
     public <T> SessionV12<T> invoke(
