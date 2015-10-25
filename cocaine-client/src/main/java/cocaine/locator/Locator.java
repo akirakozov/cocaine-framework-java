@@ -16,6 +16,7 @@ import cocaine.netty.MessageDecoder;
 import cocaine.netty.MessageEncoder;
 import cocaine.netty.MessagePackableEncoder;
 import cocaine.service.ServiceV12;
+import cocaine.session.PrimitiveProtocol;
 import cocaine.session.SessionV12;
 import com.google.common.base.Suppliers;
 import io.netty.bootstrap.Bootstrap;
