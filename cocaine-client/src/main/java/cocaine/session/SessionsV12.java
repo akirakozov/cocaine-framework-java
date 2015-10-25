@@ -38,8 +38,12 @@ public class SessionsV12 {
 
     public void onEvent(MessageV12 msg) {
         SessionV12 session = sessions.get(msg.getSession());
-        // TODO: handle unknown (null) session
-        session.rx().onRead(msg.getType(), msg.getPayload());
+        if (session != null) {
+            session.rx().onRead(msg.getType(), msg.getPayload());
+        } else {
+            logger.debug("Unknown mesage for service: " + service + ", message typ: " +
+                    msg.getType() + ", session:" + msg.getSession());
+        }
     }
 
     public void onCompleted(long id) {
