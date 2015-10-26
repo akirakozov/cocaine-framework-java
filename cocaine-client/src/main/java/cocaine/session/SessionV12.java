@@ -1,6 +1,7 @@
 package cocaine.session;
 
 import cocaine.api.TransactionTree;
+import cocaine.session.protocol.CocaineProtocol;
 
 /**
  * @author akirakozov

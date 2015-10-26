@@ -2,10 +2,9 @@ package cocaine.session;
 
 import cocaine.api.TransactionTree;
 import cocaine.messagev12.MessageV12;
+import cocaine.session.protocol.CocaineProtocol;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
-import rx.subjects.ReplaySubject;
-import rx.subjects.Subject;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

@@ -1,4 +1,4 @@
-package cocaine.session;
+package cocaine.session.protocol;
 
 import org.msgpack.type.Value;
 

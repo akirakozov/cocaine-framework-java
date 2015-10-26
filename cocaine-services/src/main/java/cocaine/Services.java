@@ -11,6 +11,8 @@ import javax.inject.Inject;
 
 import cocaine.annotations.CocaineMethod;
 import cocaine.annotations.CocaineService;
+import cocaine.locator.Locator;
+import cocaine.service.ServiceV12;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -62,6 +64,11 @@ public class Services {
         this.locator = locator;
     }
 
+    public ServiceV12 service(String name) {
+        return locator.service(name);
+    }
+
+    /*
     public <T extends AutoCloseable> T service(Class<T> type) {
         Service service = locator.service(getServiceName(type));
         return create(type, new ServiceMethodHandler(service));
@@ -71,6 +78,7 @@ public class Services {
         Service service = locator.service(getServiceName(type));
         return create(type, new AppServiceMethodHandler(service));
     }
+    */
 
     private static <T> String getServiceName(Class<T> type) {
         CocaineService service = Preconditions.checkNotNull(type.getAnnotation(CocaineService.class),

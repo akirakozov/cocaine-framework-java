@@ -4,6 +4,7 @@ import cocaine.CocaineException;
 import cocaine.api.ServiceApiV12;
 import cocaine.netty.ServiceMessageHandlerV12;
 import cocaine.session.*;
+import cocaine.session.protocol.CocaineProtocol;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import io.netty.bootstrap.Bootstrap;

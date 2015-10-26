@@ -3,6 +3,7 @@ package cocaine.session;
 import cocaine.ServiceException;
 import cocaine.api.TransactionTree;
 import cocaine.api.TransactionTree.TransactionInfo;
+import cocaine.session.protocol.CocaineProtocol;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
 import rx.subjects.ReplaySubject;
