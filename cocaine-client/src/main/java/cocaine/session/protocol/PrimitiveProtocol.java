@@ -3,6 +3,10 @@ package cocaine.session.protocol;
 import cocaine.ServiceException;
 import org.msgpack.type.Value;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author akirakozov
  */
@@ -18,5 +22,10 @@ public class PrimitiveProtocol implements CocaineProtocol {
         } else {
             throw new ProtocolException(service, "Incorrect message type: " + messageType);
         }
+    }
+
+    @Override
+    public Set<String> getAllMessageTypes() {
+        return new HashSet<>(Arrays.asList(VALUE, ERROR));
     }
 }

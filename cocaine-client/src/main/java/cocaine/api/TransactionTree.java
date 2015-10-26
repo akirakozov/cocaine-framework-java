@@ -1,8 +1,6 @@
 package cocaine.api;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author akirakozov
@@ -33,6 +31,15 @@ public class TransactionTree {
 
     public boolean isEmpty() {
         return transactions.isEmpty();
+    }
+
+    public Set<String> getAllMessageTypes() {
+        HashSet<String> values = new HashSet<>();
+        for (TransactionInfo info : transactions.values()) {
+            values.add(info.getMessageName());
+            values.addAll(info.getTree().getAllMessageTypes());
+        }
+        return values;
     }
 
     private static TransactionTree createSimpleValueTree() {
