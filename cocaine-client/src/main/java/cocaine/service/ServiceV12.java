@@ -4,7 +4,8 @@ import cocaine.CocaineException;
 import cocaine.api.ServiceApiV12;
 import cocaine.netty.ServiceMessageHandlerV12;
 import cocaine.session.*;
-import cocaine.session.protocol.CocaineProtocol;
+import cocaine.session.protocol.CocaineProtocolsRegistry;
+import cocaine.session.protocol.DefaultCocaineProtocolRegistry;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import io.netty.bootstrap.Bootstrap;
@@ -37,36 +38,52 @@ public class ServiceV12 implements  AutoCloseable {
     private AtomicBoolean closed;
     private Channel channel;
 
-    private ServiceV12(String name, ServiceApiV12 api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint) {
+    private ServiceV12(
+            String name, ServiceApiV12 api, Bootstrap bootstrap,
+            Supplier<SocketAddress> endpoint, CocaineProtocolsRegistry protocolsRegistry)
+    {
         this.name = name;
-        this.sessions = new SessionsV12(name);
+        this.sessions = new SessionsV12(name, protocolsRegistry);
         this.api = api;
         this.closed = new AtomicBoolean(false);
         connect(bootstrap, endpoint, new ServiceMessageHandlerV12(name, sessions));
     }
 
-    public static ServiceV12 create(String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint, ServiceApiV12 api) {
+    private ServiceV12(String name, ServiceApiV12 api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint) {
+        this(name, api, bootstrap, endpoint, DefaultCocaineProtocolRegistry.getDefaultRegistry());
+    }
+
+    public static ServiceV12 create(
+            String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
+            ServiceApiV12 api, CocaineProtocolsRegistry protocolsRegistry)
+    {
+        return new ServiceV12(name, api, bootstrap, endpoint, protocolsRegistry);
+    }
+
+    public static ServiceV12 create(
+            String name, Bootstrap bootstrap,
+            Supplier<SocketAddress> endpoint, ServiceApiV12 api)
+    {
         return new ServiceV12(name, api, bootstrap, endpoint);
     }
 
-    public SessionV12<Value> invoke(String method, CocaineProtocol protocol, Object... args) {
-        return invoke(method, Arrays.asList(args), protocol);
+    public SessionV12<Value> invoke(String method, Object... args) {
+        return invoke(method, Arrays.asList(args));
     }
 
-    public SessionV12<Value> invoke(String method, List<Object> args, CocaineProtocol protocol) {
-        return invoke(method, args, protocol, new ValueIdentityPayloadDeserializer());
+    public SessionV12<Value> invoke(String method, List<Object> args) {
+        return invoke(method, args, new ValueIdentityPayloadDeserializer());
     }
 
     public <T> SessionV12<T> invoke(
             String method, List<Object> args,
-            CocaineProtocol protocol, CocainePayloadDeserializer<T> deserializer)
+            CocainePayloadDeserializer<T> deserializer)
     {
         logger.debug("Invoking " + method + "(" + Joiner.on(", ").join(args) + ") asynchronously");
 
         SessionV12<T> session = sessions.create(
                 api.getReceiveTree(method),
                 api.getTransmitTree(method),
-                protocol,
                 deserializer);
         int requestedMethod = api.getMessageId(method);
         channel.write(new InvocationRequest(requestedMethod, session.getId(), args));

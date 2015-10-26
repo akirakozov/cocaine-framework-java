@@ -13,6 +13,7 @@ import cocaine.annotations.CocaineMethod;
 import cocaine.annotations.CocaineService;
 import cocaine.locator.Locator;
 import cocaine.service.ServiceV12;
+import cocaine.session.protocol.CocaineProtocolsRegistry;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -62,6 +63,10 @@ public class Services {
         this.serializers = ImmutableList.<CocaineSerializer>of(new MessagePackSerializer(pack));
         this.deserializers = ImmutableList.<CocaineDeserializer>of(new MessagePackDeserializer(pack));
         this.locator = locator;
+    }
+
+    public ServiceV12 service(String name, CocaineProtocolsRegistry registry) {
+        return locator.service(name, registry);
     }
 
     public ServiceV12 service(String name) {

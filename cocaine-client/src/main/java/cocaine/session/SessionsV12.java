@@ -3,6 +3,7 @@ package cocaine.session;
 import cocaine.api.TransactionTree;
 import cocaine.messagev12.MessageV12;
 import cocaine.session.protocol.CocaineProtocol;
+import cocaine.session.protocol.CocaineProtocolsRegistry;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
 
@@ -19,27 +20,30 @@ public class SessionsV12 {
     private final AtomicLong counter;
     private final Map<Long, SessionV12> sessions;
     private final String service;
+    private final CocaineProtocolsRegistry protocolsRegistry;
 
-    public SessionsV12(String service) {
+    public SessionsV12(String service, CocaineProtocolsRegistry protocolsRegistry) {
         this.service = service;
         this.counter = new AtomicLong(1);
         this.sessions = new ConcurrentHashMap<>();
+        this.protocolsRegistry = protocolsRegistry;
     }
 
     public <T> SessionV12<T> create(
             TransactionTree rx, TransactionTree tx,
-            CocaineProtocol protocol, CocainePayloadDeserializer<T> deserializer)
+            CocainePayloadDeserializer<T> deserializer)
     {
         long id = counter.getAndIncrement();
 
         logger.debug("Creating new session: " + id);
+        CocaineProtocol protocol = protocolsRegistry.findProtocol(rx);
         SessionV12 session = new SessionV12(id, service, rx, tx, protocol, deserializer);
         sessions.put(id, session);
         return session;
     }
 
-    public SessionV12<Value> create(TransactionTree rx, TransactionTree tx, CocaineProtocol protocol) {
-        return create(rx, tx, protocol, new ValueIdentityPayloadDeserializer());
+    public SessionV12<Value> create(TransactionTree rx, TransactionTree tx) {
+        return create(rx, tx, new ValueIdentityPayloadDeserializer());
     }
 
     public void onEvent(MessageV12 msg) {

@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import cocaine.ServiceInfoV12;
@@ -16,6 +17,7 @@ import cocaine.netty.MessageDecoder;
 import cocaine.netty.MessageEncoder;
 import cocaine.netty.MessagePackableEncoder;
 import cocaine.service.ServiceV12;
+import cocaine.session.protocol.CocaineProtocolsRegistry;
 import cocaine.session.protocol.PrimitiveProtocol;
 import cocaine.session.SessionV12;
 import com.google.common.base.Suppliers;
@@ -82,16 +84,29 @@ public final class Locator implements AutoCloseable {
     }
 
     public ServiceV12 service(final String name) {
-        logger.info("Creating service " + name);
-        // TODO: use all endpoints instead of only first
-        ServiceInfoV12 info = resolve(name);
-        return ServiceV12.create(name, bootstrap, () -> info.getEndpoints().get(0), info.getApi());
+        return createService(name, Optional.empty());
     }
+
+    public ServiceV12 service(final String name, final CocaineProtocolsRegistry registry) {
+        return createService(name, Optional.of(registry));
+    }
+
 
     @Override
     public void close() {
         logger.info("Shutting down locator");
         eventLoop.shutdownGracefully();
+    }
+
+    private ServiceV12 createService(final String name, final Optional<CocaineProtocolsRegistry> registry) {
+        logger.info("Creating service " + name);
+        // TODO: use all endpoints instead of only first
+        ServiceInfoV12 info = resolve(name);
+        if (registry.isPresent()) {
+            return ServiceV12.create(name, bootstrap, () -> info.getEndpoints().get(0), info.getApi(), registry.get());
+        } else {
+            return ServiceV12.create(name, bootstrap, () -> info.getEndpoints().get(0), info.getApi());
+        }
     }
 
     private ServiceInfoV12 resolve(String name) {
