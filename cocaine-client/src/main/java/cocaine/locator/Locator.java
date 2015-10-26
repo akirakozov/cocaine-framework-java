@@ -2,6 +2,7 @@ package cocaine.locator;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -112,7 +113,7 @@ public final class Locator implements AutoCloseable {
     private ServiceInfoV12 resolve(String name) {
         logger.info("Resolving service info for " + name);
         try {
-            SessionV12<Value> session = service.invoke("resolve", new PrimitiveProtocol(), name);
+            SessionV12<Value> session = service.invoke("resolve", Arrays.asList(name));
             return new Converter(session.rx().get()).read(ServiceInfoV12Template.create(name));
             //byte[] result = service.invoke("resolve", name).toBlocking().single();
             //return pack.read(result, ServiceInfoTemplate.create(name));

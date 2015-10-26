@@ -67,17 +67,12 @@ public class ServiceV12 implements  AutoCloseable {
         return new ServiceV12(name, api, bootstrap, endpoint);
     }
 
-    public SessionV12<Value> invoke(String method, Object... args) {
-        return invoke(method, Arrays.asList(args));
-    }
-
     public SessionV12<Value> invoke(String method, List<Object> args) {
-        return invoke(method, args, new ValueIdentityPayloadDeserializer());
+        return invoke(method, new ValueIdentityPayloadDeserializer(), args);
     }
 
     public <T> SessionV12<T> invoke(
-            String method, List<Object> args,
-            CocainePayloadDeserializer<T> deserializer)
+            String method, CocainePayloadDeserializer<T> deserializer, List<Object> args)
     {
         logger.debug("Invoking " + method + "(" + Joiner.on(", ").join(args) + ") asynchronously");
 
