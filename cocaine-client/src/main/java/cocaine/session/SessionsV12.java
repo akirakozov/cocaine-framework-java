@@ -4,6 +4,7 @@ import cocaine.api.TransactionTree;
 import cocaine.messagev12.MessageV12;
 import cocaine.session.protocol.CocaineProtocol;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
+import io.netty.channel.Channel;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
 
@@ -31,19 +32,19 @@ public class SessionsV12 {
 
     public <T> SessionV12<T> create(
             TransactionTree rx, TransactionTree tx,
-            CocainePayloadDeserializer<T> deserializer)
+            Channel channel, CocainePayloadDeserializer<T> deserializer)
     {
         long id = counter.getAndIncrement();
 
         logger.debug("Creating new session: " + id);
         CocaineProtocol protocol = protocolsRegistry.findProtocol(rx);
-        SessionV12 session = new SessionV12(id, service, rx, tx, protocol, this, deserializer);
+        SessionV12 session = new SessionV12(id, service, rx, tx, protocol, this, channel, deserializer);
         sessions.put(id, session);
         return session;
     }
 
-    public SessionV12<Value> create(TransactionTree rx, TransactionTree tx) {
-        return create(rx, tx, new ValueIdentityPayloadDeserializer());
+    public SessionV12<Value> create(TransactionTree rx, TransactionTree tx, Channel channel) {
+        return create(rx, tx, channel, new ValueIdentityPayloadDeserializer());
     }
 
     public void onEvent(MessageV12 msg) {

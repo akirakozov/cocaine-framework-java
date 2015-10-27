@@ -2,6 +2,7 @@ package cocaine.session;
 
 import cocaine.api.TransactionTree;
 import cocaine.session.protocol.CocaineProtocol;
+import io.netty.channel.Channel;
 
 /**
  * @author akirakozov
@@ -17,11 +18,12 @@ public class SessionV12<T> implements AutoCloseable {
             TransactionTree rx, TransactionTree tx,
             CocaineProtocol protocol,
             SessionsV12 sessionsV12,
+            Channel channel,
             CocainePayloadDeserializer deserializer)
     {
         this.id = id;
         this.rx = new ReceiveChannel(serviceName, rx, protocol, deserializer);
-        this.tx = new TransmitChannel(tx);
+        this.tx = new TransmitChannel(serviceName, tx, channel, id);
         this.sessionsV12 = sessionsV12;
     }
 

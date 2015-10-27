@@ -74,14 +74,12 @@ public class ServiceV12 implements  AutoCloseable {
     public <T> SessionV12<T> invoke(
             String method, CocainePayloadDeserializer<T> deserializer, List<Object> args)
     {
-        logger.debug("Invoking " + method + "(" + Joiner.on(", ").join(args) + ") asynchronously");
-
         SessionV12<T> session = sessions.create(
                 api.getReceiveTree(method),
                 api.getTransmitTree(method),
+                channel,
                 deserializer);
-        int requestedMethod = api.getMessageId(method);
-        channel.write(new InvocationRequest(requestedMethod, session.getId(), args));
+        InvocationUtils.invoke(channel, session.getId(), api.getMessageId(method), args);
 
         return session;
     }
@@ -118,38 +116,6 @@ public class ServiceV12 implements  AutoCloseable {
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw new CocaineException(e);
-        }
-    }
-
-    private static class InvocationRequest implements MessagePackable {
-
-        private final int method;
-        private final long session;
-        private final List<Object> args;
-
-        public InvocationRequest(int method, long session, List<Object> args) {
-            this.method = method;
-            this.session = session;
-            this.args = args;
-        }
-
-        @Override
-        public void writeTo(Packer packer) throws IOException {
-            packer.writeArrayBegin(3);
-            packer.write(session);
-            packer.write(method);
-            packer.write(args);
-            packer.writeArrayEnd();
-        }
-
-        @Override
-        public void readFrom(Unpacker unpacker) {
-            throw new UnsupportedOperationException("Reading InvocationRequest is not supported");
-        }
-
-        @Override
-        public String toString() {
-            return "InvocationRequest/" + session + ": " + method + " [" + Joiner.on(", ").join(args) + "]";
         }
     }
 
