@@ -37,7 +37,7 @@ public class SessionsV12 {
 
         logger.debug("Creating new session: " + id);
         CocaineProtocol protocol = protocolsRegistry.findProtocol(rx);
-        SessionV12 session = new SessionV12(id, service, rx, tx, protocol, deserializer);
+        SessionV12 session = new SessionV12(id, service, rx, tx, protocol, this, deserializer);
         sessions.put(id, session);
         return session;
     }
@@ -60,7 +60,7 @@ public class SessionsV12 {
         SessionV12 session = sessions.remove(id);
         if (session != null) {
             logger.debug("Closing session " + id);
-            session.rx().onCompleted();
+            session.onCompleted();
         } else {
             logger.warn("Session " + id + " does not exist");
         }
@@ -71,5 +71,9 @@ public class SessionsV12 {
         for (long session : sessions.keySet()) {
             onCompleted(session);
         }
+    }
+
+    public void removeSession(long id) {
+        sessions.remove(id);
     }
 }

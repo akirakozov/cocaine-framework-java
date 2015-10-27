@@ -11,4 +11,8 @@ public class TransmitChannel {
     public TransmitChannel(TransactionTree transmitTree) {
         this.transmitTree = transmitTree;
     }
+
+    public void onCompleted() {
+        // TODO: implement
+    }
 }
