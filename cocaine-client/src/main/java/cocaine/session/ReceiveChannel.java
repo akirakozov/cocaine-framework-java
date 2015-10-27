@@ -40,6 +40,8 @@ public class ReceiveChannel<T> {
     }
 
     public T get() {
+        checkIsDone();
+
         ResultMessage msg = subject.toBlocking().first();
         Value payload = protocol.handle(serviceName, msg.messageType, msg.payload);
         try {
@@ -54,12 +56,15 @@ public class ReceiveChannel<T> {
     void onRead(int type, Value payload) {
         TransactionInfo info = rxTree.getInfo(type);
         if (info == null) {
-            // TODO: handle incorrect receive message
+            isDone.set(true);
+            subject.onError(new ServiceException(serviceName, "Unknown message type: " + type));
+            logger.error("Unknown message type: " + type + ", for service " + serviceName);
         }
         subject.onNext(new ResultMessage(info.getMessageName(), payload));
         if (!info.getTree().isCycle()) {
             if (info.getTree().isEmpty()) {
-                done();
+                onCompleted();
+                logger.info("Last message received");
             } else {
                 rxTree = info.getTree();
             }
@@ -67,12 +72,18 @@ public class ReceiveChannel<T> {
     }
 
     public void onCompleted() {
-        subject.onCompleted();
         done();
+        subject.onCompleted();
     }
 
-    private void done() {
+    public void done() {
         isDone.set(true);
+    }
+
+    private void checkIsDone() {
+        if (isDone.get()) {
+            throw new ServiceException(serviceName, "Session is completed.");
+        }
     }
 
     private static class ResultMessage {
