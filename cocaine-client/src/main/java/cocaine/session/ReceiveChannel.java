@@ -11,6 +11,7 @@ import rx.subjects.Subject;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author akirakozov
@@ -21,6 +22,7 @@ public class ReceiveChannel<T> {
     private TransactionTree rxTree;
     private final Subject<ResultMessage, ResultMessage> subject;
     private final AtomicBoolean isDone;
+    private final AtomicInteger curMessageNum;
     private final CocaineProtocol protocol;
     private final CocainePayloadDeserializer<T> deserializer;
     private final String serviceName;
@@ -35,6 +37,7 @@ public class ReceiveChannel<T> {
         this.rxTree = rxTree;
         this.subject = ReplaySubject.create();
         this.isDone = new AtomicBoolean(false);
+        this.curMessageNum = new AtomicInteger(0);
         this.protocol = protocol;
         this.deserializer = deserializer;
     }
@@ -42,7 +45,7 @@ public class ReceiveChannel<T> {
     public T get() {
         checkIsDone();
 
-        ResultMessage msg = subject.toBlocking().first();
+        ResultMessage msg = subject.skip(curMessageNum.getAndIncrement()).toBlocking().first();
         Value payload = protocol.handle(serviceName, msg.messageType, msg.payload);
         try {
             return deserializer.deserialize(msg.messageType, payload);
