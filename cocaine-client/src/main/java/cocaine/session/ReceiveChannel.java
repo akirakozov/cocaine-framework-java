@@ -64,8 +64,6 @@ public class ReceiveChannel<T> {
                 rxTree = info.getTree();
             }
         }
-        // TODO: add support of cycle
-
     }
 
     public void onCompleted() {
