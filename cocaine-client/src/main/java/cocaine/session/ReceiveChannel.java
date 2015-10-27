@@ -57,10 +57,12 @@ public class ReceiveChannel<T> {
             // TODO: handle incorrect receive message
         }
         subject.onNext(new ResultMessage(info.getMessageName(), payload));
-        if (info.getTree().isEmpty()) {
-            done();
-        } else {
-            rxTree = info.getTree();
+        if (!info.getTree().isCycle()) {
+            if (info.getTree().isEmpty()) {
+                done();
+            } else {
+                rxTree = info.getTree();
+            }
         }
         // TODO: add support of cycle
 

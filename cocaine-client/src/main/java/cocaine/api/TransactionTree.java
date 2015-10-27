@@ -8,7 +8,10 @@ import java.util.*;
 public class TransactionTree {
     private final Map<Integer, TransactionInfo> transactions;
     public static TransactionTree EMPTY = new TransactionTree(Collections.emptyMap());
+    public static TransactionTree CYCLE = new CycleTree();
     public static TransactionTree SIMPLE_VALUE = createSimpleValueTree();
+    public static TransactionTree STREAMING = createStreamingTree();
+
 
     public TransactionTree(Map<Integer, TransactionInfo> transactions) {
         this.transactions = transactions;
@@ -42,12 +45,35 @@ public class TransactionTree {
         return values;
     }
 
+    public boolean isCycle() {
+        return false;
+    }
+
+    private static TransactionTree createStreamingTree() {
+        // {0: ['write', None], 1: ['error', {}], 2: ['close', {}]}
+        Map<Integer, TransactionInfo> tree = new HashMap<>();
+        tree.put(0, new TransactionInfo("write", CYCLE));
+        tree.put(1, new TransactionInfo("error", EMPTY));
+        tree.put(2, new TransactionInfo("close", EMPTY));
+        return new TransactionTree(tree);
+    }
+
     private static TransactionTree createSimpleValueTree() {
         // {0: ['value', {}], 1: ['error', {}]}
         Map<Integer, TransactionInfo> tree = new HashMap<>();
         tree.put(0, new TransactionInfo("value", EMPTY));
         tree.put(1, new TransactionInfo("error", EMPTY));
         return new TransactionTree(tree);
+    }
+
+    private static class CycleTree extends TransactionTree {
+        private CycleTree() {
+            super(Collections.emptyMap());
+        }
+
+        public boolean isCycle() {
+            return true;
+        }
     }
 
     public static class TransactionInfo {

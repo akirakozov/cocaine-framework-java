@@ -26,7 +26,6 @@ public class TransactionDescriptionTemplate extends AbstractTemplate<Transaction
 
     @Override
     public TransactionDescription read(Unpacker unpacker, TransactionDescription to, boolean required) throws IOException {
-        // 1: ['verbosity', {}, {0: ['value', {}], 1: ['error', {}]}]
         unpacker.readArrayBegin();
         String messageName = unpacker.readString();
         TransactionTree txTree = unpacker.read(TransactionTreeTemplate.getInstance());

@@ -32,4 +32,24 @@ public class TransactionTreeTemplateTest {
         Assert.assertEquals(0, trTree.getMessageId("value"));
         Assert.assertEquals(1, trTree.getMessageId("error"));
     }
+
+    @Test
+    public void readSteamProtocol() throws Exception {
+        MessagePack pack = new MessagePack();
+        // {0: ['write', None], 1: ['error', {}], 2: ['close', {}]}
+        Map<Integer, Object> protocol = new HashMap<>();
+        protocol.put(0, Arrays.asList("write", null));
+        protocol.put(1, Arrays.asList("error", Collections.emptyMap()));
+        protocol.put(2, Arrays.asList("close", Collections.emptyMap()));
+
+        byte[] bytes = pack.write(protocol);
+        TransactionTree trTree = pack.read(bytes, TransactionTreeTemplate.getInstance());
+        TransactionTree.TransactionInfo info = trTree.getInfo(0);
+
+        Assert.assertNotNull(info);
+        Assert.assertEquals("write", info.getMessageName());
+        Assert.assertTrue(info.getTree().isCycle());
+        Assert.assertEquals(0, trTree.getMessageId("write"));
+        Assert.assertEquals(1, trTree.getMessageId("error"));
+    }
 }

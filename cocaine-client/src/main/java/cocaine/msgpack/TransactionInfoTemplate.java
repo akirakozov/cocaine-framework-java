@@ -29,6 +29,7 @@ public class TransactionInfoTemplate extends AbstractTemplate<TransactionInfo> {
         unpacker.readArrayBegin();
         String messageName = unpacker.readString();
         TransactionTree tree = unpacker.read(TransactionTreeTemplate.getInstance());
+        tree = tree != null ? tree : TransactionTree.CYCLE;
         unpacker.readArrayEnd();
 
         return new TransactionInfo(messageName, tree);
