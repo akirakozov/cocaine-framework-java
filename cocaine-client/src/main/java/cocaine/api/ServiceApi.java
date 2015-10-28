@@ -7,11 +7,11 @@ import java.util.Map;
 /**
  * @author akirakozov
  */
-public class ServiceApiV12 {
+public class ServiceApi {
     private final String serviceName;
     private final Map<Integer, TransactionDescription> transactions;
 
-    public ServiceApiV12(String serviceName, Map<Integer, TransactionDescription> transactions) {
+    public ServiceApi(String serviceName, Map<Integer, TransactionDescription> transactions) {
         this.serviceName = serviceName;
         this.transactions = transactions;
     }

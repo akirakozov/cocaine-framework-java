@@ -1,6 +1,6 @@
 package cocaine.msgpack;
 
-import cocaine.api.ServiceApiV12.TransactionDescription;
+import cocaine.api.ServiceApi.TransactionDescription;
 import cocaine.api.TransactionTree;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;

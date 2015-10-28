@@ -3,9 +3,9 @@ package cocaine;
 import cocaine.annotations.CocaineMethodV12;
 import cocaine.annotations.CocaineService;
 import cocaine.locator.Locator;
-import cocaine.service.ServiceV12;
+import cocaine.service.Service;
 import cocaine.session.CocainePayloadDeserializer;
-import cocaine.session.SessionV12;
+import cocaine.session.Session;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -17,7 +17,6 @@ import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 import org.msgpack.MessagePack;
-import rx.Observable;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -53,7 +52,7 @@ public class ServiceFactory {
     }
 
     public <T extends AutoCloseable> T createService(Class<T> type) {
-        ServiceV12 service = locator.service(getServiceName(type));
+        Service service = locator.service(getServiceName(type));
         return create(type, new ServiceMethodHandler(service));
     }
 
@@ -87,7 +86,7 @@ public class ServiceFactory {
     }
 
     private static Class<?> getResultType(TypeToken<?> returnType) {
-        Preconditions.checkArgument(SessionV12.class.isAssignableFrom(returnType.getRawType()),
+        Preconditions.checkArgument(Session.class.isAssignableFrom(returnType.getRawType()),
                 "Method result type should be parametrized Session<> value");
         Preconditions.checkArgument(returnType.getType() instanceof ParameterizedType,
                 "Method result type should be parametrized Session<> value");
@@ -109,9 +108,9 @@ public class ServiceFactory {
 
     private abstract class CocaineMethodHandler implements MethodHandler {
 
-        private final ServiceV12 service;
+        private final Service service;
 
-        protected CocaineMethodHandler(ServiceV12 service) {
+        protected CocaineMethodHandler(Service service) {
             this.service = service;
         }
 
@@ -148,7 +147,7 @@ public class ServiceFactory {
 
     private class ServiceMethodHandler extends CocaineMethodHandler {
 
-        public ServiceMethodHandler(ServiceV12 service) {
+        public ServiceMethodHandler(Service service) {
             super(service);
         }
 

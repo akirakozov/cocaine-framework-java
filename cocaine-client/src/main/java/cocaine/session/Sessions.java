@@ -15,22 +15,22 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author akirakozov
  */
-public class SessionsV12 {
-    private static final Logger logger = Logger.getLogger(SessionsV12.class);
+public class Sessions {
+    private static final Logger logger = Logger.getLogger(Sessions.class);
 
     private final AtomicLong counter;
-    private final Map<Long, SessionV12> sessions;
+    private final Map<Long, Session> sessions;
     private final String service;
     private final CocaineProtocolsRegistry protocolsRegistry;
 
-    public SessionsV12(String service, CocaineProtocolsRegistry protocolsRegistry) {
+    public Sessions(String service, CocaineProtocolsRegistry protocolsRegistry) {
         this.service = service;
         this.counter = new AtomicLong(1);
         this.sessions = new ConcurrentHashMap<>();
         this.protocolsRegistry = protocolsRegistry;
     }
 
-    public <T> SessionV12<T> create(
+    public <T> Session<T> create(
             TransactionTree rx, TransactionTree tx,
             Channel channel, CocainePayloadDeserializer<T> deserializer)
     {
@@ -38,17 +38,17 @@ public class SessionsV12 {
 
         logger.debug("Creating new session: " + id);
         CocaineProtocol protocol = protocolsRegistry.findProtocol(rx);
-        SessionV12 session = new SessionV12(id, service, rx, tx, protocol, this, channel, deserializer);
+        Session session = new Session(id, service, rx, tx, protocol, this, channel, deserializer);
         sessions.put(id, session);
         return session;
     }
 
-    public SessionV12<Value> create(TransactionTree rx, TransactionTree tx, Channel channel) {
+    public Session<Value> create(TransactionTree rx, TransactionTree tx, Channel channel) {
         return create(rx, tx, channel, new ValueIdentityPayloadDeserializer());
     }
 
     public void onEvent(MessageV12 msg) {
-        SessionV12 session = sessions.get(msg.getSession());
+        Session session = sessions.get(msg.getSession());
         if (session != null) {
             session.rx().onRead(msg.getType(), msg.getPayload());
         } else {
@@ -58,7 +58,7 @@ public class SessionsV12 {
     }
 
     public void onCompleted(long id) {
-        SessionV12 session = sessions.remove(id);
+        Session session = sessions.remove(id);
         if (session != null) {
             logger.debug("Closing session " + id);
             session.onCompleted();

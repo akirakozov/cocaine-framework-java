@@ -8,19 +8,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import cocaine.ServiceInfoV12;
-import cocaine.api.ServiceApiV12;
+import cocaine.ServiceInfo;
+import cocaine.api.ServiceApi;
 import cocaine.api.TransactionTree;
 import cocaine.message.Message;
 import cocaine.msgpack.MessageTemplate;
-import cocaine.msgpack.ServiceInfoV12Template;
+import cocaine.msgpack.ServiceInfoTemplate;
 import cocaine.netty.MessageDecoder;
 import cocaine.netty.MessageEncoder;
 import cocaine.netty.MessagePackableEncoder;
-import cocaine.service.ServiceV12;
+import cocaine.service.Service;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
-import cocaine.session.protocol.PrimitiveProtocol;
-import cocaine.session.SessionV12;
+import cocaine.session.Session;
 import com.google.common.base.Suppliers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -46,7 +45,7 @@ public final class Locator implements AutoCloseable {
     private final EventLoopGroup eventLoop;
     private final MessagePack pack;
     private final Bootstrap bootstrap;
-    private final ServiceV12 service;
+    private final Service service;
 
     private Locator(SocketAddress endpoint) {
         this.endpoint = endpoint;
@@ -71,8 +70,8 @@ public final class Locator implements AutoCloseable {
                     }
                 });
 
-        ServiceApiV12 locatorApi = createLocatorApi();
-        this.service = ServiceV12.create("locator", bootstrap, Suppliers.ofInstance(endpoint), locatorApi);
+        ServiceApi locatorApi = createLocatorApi();
+        this.service = Service.create("locator", bootstrap, Suppliers.ofInstance(endpoint), locatorApi);
     }
 
     public static Locator create() {
@@ -84,11 +83,11 @@ public final class Locator implements AutoCloseable {
         return new Locator(endpoint);
     }
 
-    public ServiceV12 service(final String name) {
+    public Service service(final String name) {
         return createService(name, Optional.empty());
     }
 
-    public ServiceV12 service(final String name, final CocaineProtocolsRegistry registry) {
+    public Service service(final String name, final CocaineProtocolsRegistry registry) {
         return createService(name, Optional.of(registry));
     }
 
@@ -99,35 +98,35 @@ public final class Locator implements AutoCloseable {
         eventLoop.shutdownGracefully();
     }
 
-    private ServiceV12 createService(final String name, final Optional<CocaineProtocolsRegistry> registry) {
+    private Service createService(final String name, final Optional<CocaineProtocolsRegistry> registry) {
         logger.info("Creating service " + name);
         // TODO: use all endpoints instead of only first
-        ServiceInfoV12 info = resolve(name);
+        ServiceInfo info = resolve(name);
         if (registry.isPresent()) {
-            return ServiceV12.create(name, bootstrap, () -> info.getEndpoints().get(0), info.getApi(), registry.get());
+            return Service.create(name, bootstrap, () -> info.getEndpoints().get(0), info.getApi(), registry.get());
         } else {
-            return ServiceV12.create(name, bootstrap, () -> info.getEndpoints().get(0), info.getApi());
+            return Service.create(name, bootstrap, () -> info.getEndpoints().get(0), info.getApi());
         }
     }
 
-    private ServiceInfoV12 resolve(String name) {
+    private ServiceInfo resolve(String name) {
         logger.info("Resolving service info for " + name);
         try {
-            SessionV12<Value> session = service.invoke("resolve", Arrays.asList(name));
-            return new Converter(session.rx().get()).read(ServiceInfoV12Template.create(name));
+            Session<Value> session = service.invoke("resolve", Arrays.asList(name));
+            return new Converter(session.rx().get()).read(ServiceInfoTemplate.create(name));
         } catch (Exception e) {
             throw new LocatorResolveException(name, endpoint, e);
         }
     }
 
-    private static ServiceApiV12 createLocatorApi() {
+    private static ServiceApi createLocatorApi() {
         // {0: ['resolve', {}, {0: ['value', {}], 1: ['error', {}]}]
         // TODO: add another methods
-        Map<Integer, ServiceApiV12.TransactionDescription> map = new HashMap();
-        map.put(0, new ServiceApiV12.TransactionDescription(
+        Map<Integer, ServiceApi.TransactionDescription> map = new HashMap();
+        map.put(0, new ServiceApi.TransactionDescription(
                 "resolve", TransactionTree.SIMPLE_VALUE, TransactionTree.EMPTY));
 
-        return new ServiceApiV12("locator", map);
+        return new ServiceApi("locator", map);
     }
 
 }

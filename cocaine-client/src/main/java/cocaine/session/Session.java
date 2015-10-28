@@ -7,24 +7,24 @@ import io.netty.channel.Channel;
 /**
  * @author akirakozov
  */
-public class SessionV12<T> implements AutoCloseable {
+public class Session<T> implements AutoCloseable {
     private final long id;
     private final ReceiveChannel rx;
     private final TransmitChannel tx;
-    private final SessionsV12 sessionsV12;
+    private final Sessions sessions;
 
-    public SessionV12(
+    public Session(
             long id, String serviceName,
             TransactionTree rx, TransactionTree tx,
             CocaineProtocol protocol,
-            SessionsV12 sessionsV12,
+            Sessions sessions,
             Channel channel,
             CocainePayloadDeserializer deserializer)
     {
         this.id = id;
         this.rx = new ReceiveChannel(serviceName, rx, protocol, deserializer);
         this.tx = new TransmitChannel(serviceName, tx, channel, id);
-        this.sessionsV12 = sessionsV12;
+        this.sessions = sessions;
     }
 
     public ReceiveChannel<T> rx() {
@@ -41,7 +41,7 @@ public class SessionV12<T> implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        sessionsV12.removeSession(id);
+        sessions.removeSession(id);
         onCompleted();
     }
 

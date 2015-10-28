@@ -1,6 +1,6 @@
 package cocaine.msgpack;
 
-import cocaine.api.ServiceApiV12.TransactionDescription;
+import cocaine.api.ServiceApi.TransactionDescription;
 import org.junit.Assert;
 import org.junit.Test;
 import org.msgpack.MessagePack;

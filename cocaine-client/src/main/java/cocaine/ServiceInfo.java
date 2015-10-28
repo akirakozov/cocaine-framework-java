@@ -1,6 +1,6 @@
 package cocaine;
 
-import cocaine.api.ServiceApiV12;
+import cocaine.api.ServiceApi;
 
 import java.net.SocketAddress;
 import java.util.List;
@@ -8,12 +8,12 @@ import java.util.List;
 /**
  * @author akirakozov
  */
-public class ServiceInfoV12 {
+public class ServiceInfo {
     private final String name;
     private final List<SocketAddress> endpoints;
-    private final ServiceApiV12 api;
+    private final ServiceApi api;
 
-    public ServiceInfoV12(String name, List<SocketAddress> endpoints, ServiceApiV12 api) {
+    public ServiceInfo(String name, List<SocketAddress> endpoints, ServiceApi api) {
         this.name = name;
         this.endpoints = endpoints;
         this.api = api;
@@ -27,7 +27,7 @@ public class ServiceInfoV12 {
         return endpoints;
     }
 
-    public ServiceApiV12 getApi() {
+    public ServiceApi getApi() {
         return api;
     }
 

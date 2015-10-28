@@ -1,8 +1,7 @@
 package cocaine.msgpack;
 
-import cocaine.ServiceInfoV12;
-import cocaine.api.ServiceApiV12;
-import cocaine.api.TransactionTree;
+import cocaine.ServiceInfo;
+import cocaine.api.ServiceApi;
 import org.junit.Assert;
 import org.junit.Test;
 import org.msgpack.MessagePack;
@@ -14,7 +13,7 @@ import java.util.*;
 /**
  * @author akirakozov
  */
-public class ServiceInfoV12TemplateTest {
+public class ServiceInfoTemplateTest {
 
     @Test
     public void read() throws Exception {
@@ -38,12 +37,12 @@ public class ServiceInfoV12TemplateTest {
 
         List<InetSocketAddress> endpoints = Arrays.asList(new InetSocketAddress("localhost", 3456));
         byte[] bytes = pack.write(Arrays.asList(endpoints, 1, tree));
-        ServiceInfoV12 info = pack.read(bytes, ServiceInfoV12Template.create("logger"));
+        ServiceInfo info = pack.read(bytes, ServiceInfoTemplate.create("logger"));
 
         Assert.assertEquals(endpoints, info.getEndpoints());
         Assert.assertEquals("logger", info.getName());
 
-        ServiceApiV12 api = info.getApi();
+        ServiceApi api = info.getApi();
         Assert.assertEquals(0, api.getMessageId("emit"));
         Assert.assertEquals(1, api.getMessageId("verbosity"));
         Assert.assertEquals(2, api.getMessageId("set_verbosity"));

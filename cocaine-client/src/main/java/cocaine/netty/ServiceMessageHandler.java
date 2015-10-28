@@ -1,7 +1,7 @@
 package cocaine.netty;
 
 import cocaine.messagev12.MessageV12;
-import cocaine.session.SessionsV12;
+import cocaine.session.Sessions;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.log4j.Logger;
@@ -9,13 +9,13 @@ import org.apache.log4j.Logger;
 /**
  * @author akirakozov
  */
-public class ServiceMessageHandlerV12 extends ChannelInboundHandlerAdapter {
-    private static final Logger logger = Logger.getLogger(ServiceMessageHandlerV12.class);
+public class ServiceMessageHandler extends ChannelInboundHandlerAdapter {
+    private static final Logger logger = Logger.getLogger(ServiceMessageHandler.class);
 
-    private final SessionsV12 sessions;
+    private final Sessions sessions;
     private final String serviceName;
 
-    public ServiceMessageHandlerV12(String serviceName, SessionsV12 sessions) {
+    public ServiceMessageHandler(String serviceName, Sessions sessions) {
         this.serviceName = serviceName;
         this.sessions = sessions;
     }

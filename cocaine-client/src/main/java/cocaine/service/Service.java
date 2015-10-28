@@ -1,26 +1,20 @@
 package cocaine.service;
 
 import cocaine.CocaineException;
-import cocaine.api.ServiceApiV12;
-import cocaine.netty.ServiceMessageHandlerV12;
+import cocaine.api.ServiceApi;
+import cocaine.netty.ServiceMessageHandler;
 import cocaine.session.*;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
 import cocaine.session.protocol.DefaultCocaineProtocolRegistry;
-import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import org.apache.log4j.Logger;
-import org.msgpack.MessagePackable;
-import org.msgpack.packer.Packer;
 import org.msgpack.type.Value;
-import org.msgpack.unpacker.Unpacker;
 
-import java.io.IOException;
 import java.net.SocketAddress;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,53 +22,53 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author akirakozov
  */
-public class ServiceV12 implements  AutoCloseable {
-    private static final Logger logger = Logger.getLogger(ServiceV12.class);
+public class Service implements  AutoCloseable {
+    private static final Logger logger = Logger.getLogger(Service.class);
 
     private final String name;
-    private final ServiceApiV12 api;
-    private final SessionsV12 sessions;
+    private final ServiceApi api;
+    private final Sessions sessions;
 
     private AtomicBoolean closed;
     private Channel channel;
 
-    private ServiceV12(
-            String name, ServiceApiV12 api, Bootstrap bootstrap,
+    private Service(
+            String name, ServiceApi api, Bootstrap bootstrap,
             Supplier<SocketAddress> endpoint, CocaineProtocolsRegistry protocolsRegistry)
     {
         this.name = name;
-        this.sessions = new SessionsV12(name, protocolsRegistry);
+        this.sessions = new Sessions(name, protocolsRegistry);
         this.api = api;
         this.closed = new AtomicBoolean(false);
-        connect(bootstrap, endpoint, new ServiceMessageHandlerV12(name, sessions));
+        connect(bootstrap, endpoint, new ServiceMessageHandler(name, sessions));
     }
 
-    private ServiceV12(String name, ServiceApiV12 api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint) {
+    private Service(String name, ServiceApi api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint) {
         this(name, api, bootstrap, endpoint, DefaultCocaineProtocolRegistry.getDefaultRegistry());
     }
 
-    public static ServiceV12 create(
+    public static Service create(
             String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
-            ServiceApiV12 api, CocaineProtocolsRegistry protocolsRegistry)
+            ServiceApi api, CocaineProtocolsRegistry protocolsRegistry)
     {
-        return new ServiceV12(name, api, bootstrap, endpoint, protocolsRegistry);
+        return new Service(name, api, bootstrap, endpoint, protocolsRegistry);
     }
 
-    public static ServiceV12 create(
+    public static Service create(
             String name, Bootstrap bootstrap,
-            Supplier<SocketAddress> endpoint, ServiceApiV12 api)
+            Supplier<SocketAddress> endpoint, ServiceApi api)
     {
-        return new ServiceV12(name, api, bootstrap, endpoint);
+        return new Service(name, api, bootstrap, endpoint);
     }
 
-    public SessionV12<Value> invoke(String method, List<Object> args) {
+    public Session<Value> invoke(String method, List<Object> args) {
         return invoke(method, new ValueIdentityPayloadDeserializer(), args);
     }
 
-    public <T> SessionV12<T> invoke(
+    public <T> Session<T> invoke(
             String method, CocainePayloadDeserializer<T> deserializer, List<Object> args)
     {
-        SessionV12<T> session = sessions.create(
+        Session<T> session = sessions.create(
                 api.getReceiveTree(method),
                 api.getTransmitTree(method),
                 channel,
@@ -97,7 +91,7 @@ public class ServiceV12 implements  AutoCloseable {
     }
 
     private void connect(final Bootstrap bootstrap, final Supplier<SocketAddress> endpoint,
-                         final ServiceMessageHandlerV12 handler)
+                         final ServiceMessageHandler handler)
     {
         try {
             channel = bootstrap.connect(endpoint.get()).sync().channel();
