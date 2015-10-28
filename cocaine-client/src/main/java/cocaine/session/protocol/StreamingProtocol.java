@@ -1,6 +1,7 @@
 package cocaine.session.protocol;
 
 import cocaine.ServiceException;
+import org.msgpack.type.ArrayValue;
 import org.msgpack.type.Value;
 
 import java.util.Arrays;
@@ -16,8 +17,13 @@ public class StreamingProtocol implements CocaineProtocol {
     private static final String CLOSE = "close";
 
     public Value handle(String service, String messageType, Value paylod) {
+        if (!paylod.isArrayValue()) {
+            throw new ServiceException(service, "Incorrect payload format: " + paylod.getType());
+        }
+
         if (WRITE.equals(messageType)) {
-            return paylod;
+            ArrayValue values = paylod.asArrayValue();
+            return values.size() == 1 ? values.get(0) : paylod;
         } else if (ERROR.equals(messageType)) {
             throw new ServiceException(service, paylod.toString());
         } else if (CLOSE.equals(messageType)) {
