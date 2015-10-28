@@ -129,7 +129,7 @@ public final class Locator implements AutoCloseable {
         map.put(0, new ServiceApiV12.TransactionDescription(
                 "resolve", TransactionTree.SIMPLE_VALUE, TransactionTree.EMPTY));
 
-        return new ServiceApiV12(map);
+        return new ServiceApiV12("locator", map);
     }
 
 }

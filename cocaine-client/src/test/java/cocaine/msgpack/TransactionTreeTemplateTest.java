@@ -25,7 +25,7 @@ public class TransactionTreeTemplateTest {
 
         byte[] bytes = pack.write(protocol);
         TransactionTree trTree = pack.read(bytes, TransactionTreeTemplate.getInstance());
-        TransactionTree.TransactionInfo info = trTree.getInfo(0);
+        TransactionTree.TransactionInfo info = trTree.getInfo(0).get();
 
         Assert.assertNotNull(info);
         Assert.assertEquals("value", info.getMessageName());
@@ -44,7 +44,7 @@ public class TransactionTreeTemplateTest {
 
         byte[] bytes = pack.write(protocol);
         TransactionTree trTree = pack.read(bytes, TransactionTreeTemplate.getInstance());
-        TransactionTree.TransactionInfo info = trTree.getInfo(0);
+        TransactionTree.TransactionInfo info = trTree.getInfo(0).get();
 
         Assert.assertNotNull(info);
         Assert.assertEquals("write", info.getMessageName());

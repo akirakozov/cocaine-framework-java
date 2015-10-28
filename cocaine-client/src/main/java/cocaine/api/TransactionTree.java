@@ -17,19 +17,20 @@ public class TransactionTree {
         this.transactions = transactions;
     }
 
-    public TransactionInfo getInfo(int messageId) {
-        return transactions.get(messageId);
+    public Optional<TransactionInfo> getInfo(int messageId) {
+        return Optional.ofNullable(transactions.get(messageId));
     }
 
-    public TransactionInfo getInfo(String name) {
+    public Optional<TransactionInfo> getInfo(String name) {
         return transactions.values().stream()
-                .filter(info -> info.messageName.equals(name)).findFirst().get();
+                .filter(info -> info.messageName.equals(name))
+                .findFirst();
     }
 
-    public int getMessageId(String name) {
+    public Optional<Integer> getMessageId(String name) {
         return transactions.entrySet().stream()
                 .filter(it -> it.getValue().messageName.equals(name))
-                .findFirst().get().getKey();
+                .findFirst().map(Map.Entry::getKey);
     }
 
     public boolean isEmpty() {

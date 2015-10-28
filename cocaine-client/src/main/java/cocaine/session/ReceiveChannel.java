@@ -57,7 +57,7 @@ public class ReceiveChannel<T> {
     }
 
     void onRead(int type, Value payload) {
-        TransactionInfo info = rxTree.getInfo(type);
+        TransactionInfo info = rxTree.getInfo(type).get();
         if (info == null) {
             isDone.set(true);
             subject.onError(new ServiceException(serviceName, "Unknown message type: " + type));

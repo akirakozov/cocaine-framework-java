@@ -4,17 +4,17 @@ import cocaine.message.Message;
 
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
+ * @author akirakozov
  */
 public class UnexpectedServiceMessageException extends ServiceException {
+    private final int msgType;
 
-    private final Message msg;
-
-    public UnexpectedServiceMessageException(String service, Message msg) {
-        super(service, "Unexpected message: " + msg.toString());
-        this.msg = msg;
+    public UnexpectedServiceMessageException(String service, int msgType) {
+        super(service, "Unexpected message: " + msgType);
+        this.msgType = msgType;
     }
 
-    public Message getMsg() {
-        return msg;
+    public int getMsgType() {
+        return msgType;
     }
 }

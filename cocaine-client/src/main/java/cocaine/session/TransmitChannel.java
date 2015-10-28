@@ -1,6 +1,7 @@
 package cocaine.session;
 
 import cocaine.ServiceException;
+import cocaine.UnknownServiceMethodException;
 import cocaine.api.TransactionTree;
 import cocaine.service.InvocationUtils;
 import io.netty.channel.Channel;
@@ -32,9 +33,11 @@ public class TransmitChannel {
     public void invoke(String methodType, List<Object> args) {
         checkIsDone();
 
-        int msgId = txTree.getMessageId(methodType);
+        int msgId = txTree.getMessageId(methodType)
+                .orElseThrow(() -> new UnknownServiceMethodException(serviceName, methodType));
         InvocationUtils.invoke(channel, sessionId, msgId, args);
-        TransactionTree.TransactionInfo info = txTree.getInfo(methodType);
+        TransactionTree.TransactionInfo info = txTree.getInfo(methodType)
+                .orElseThrow(() -> new UnknownServiceMethodException(serviceName, methodType));
         if (!info.getTree().isCycle()) {
             if (info.getTree().isEmpty()) {
                 logger.info("Last message received");

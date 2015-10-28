@@ -48,7 +48,7 @@ public class ServiceMessageHandler extends ChannelInboundHandlerAdapter {
                 break;
             }
             default: {
-                sessions.onError(session, new UnexpectedServiceMessageException(service, message));
+                //sessions.onError(session, new UnexpectedServiceMessageException(service, message));
                 break;
             }
         }

@@ -44,6 +44,6 @@ public class ServiceInfoV12Template extends AbstractTemplate<ServiceInfoV12> {
                 Templates.tMap(Templates.TInteger, TransactionDescriptionTemplate.getInstance()));
         unpacker.readArrayEnd();
 
-        return new ServiceInfoV12(name, endpoints, new ServiceApiV12(api));
+        return new ServiceInfoV12(name, endpoints, new ServiceApiV12(name, api));
     }
 }

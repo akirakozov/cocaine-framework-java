@@ -1,14 +1,18 @@
 package cocaine.api;
 
+import cocaine.UnknownServiceMethodException;
+
 import java.util.Map;
 
 /**
  * @author akirakozov
  */
 public class ServiceApiV12 {
+    private final String serviceName;
     private final Map<Integer, TransactionDescription> transactions;
 
-    public ServiceApiV12(Map<Integer, TransactionDescription> transactions) {
+    public ServiceApiV12(String serviceName, Map<Integer, TransactionDescription> transactions) {
+        this.serviceName = serviceName;
         this.transactions = transactions;
     }
 
@@ -23,12 +27,16 @@ public class ServiceApiV12 {
     public int getMessageId(String name) {
         return transactions.entrySet().stream()
                 .filter( it -> it.getValue().getMessageName().equals(name))
-                .findFirst().get().getKey();
+                .findFirst()
+                .orElseThrow(() -> new UnknownServiceMethodException(serviceName,name))
+                .getKey();
     }
 
     private TransactionDescription findDescription(String name) {
         return transactions.values().stream()
-                .filter(info -> info.getMessageName().equals(name)).findFirst().get();
+                .filter(info -> info.getMessageName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new UnknownServiceMethodException(serviceName,name));
     }
 
     /**
