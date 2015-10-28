@@ -1,6 +1,5 @@
 package cocaine.msgpack;
 
-import cocaine.ServiceInfo;
 import cocaine.ServiceInfoV12;
 import cocaine.api.ServiceApiV12;
 import cocaine.api.ServiceApiV12.TransactionDescription;
@@ -31,8 +30,8 @@ public class ServiceInfoV12Template extends AbstractTemplate<ServiceInfoV12> {
 
     @Override
     public void write(Packer packer, ServiceInfoV12 service, boolean required) throws IOException {
-        throw new UnsupportedOperationException(ServiceInfo.class.getSimpleName()
-                + " can not be encoded by " + ServiceInfoTemplate.class.getSimpleName());
+        throw new UnsupportedOperationException(ServiceInfoV12.class.getSimpleName()
+                + " can not be encoded by " + ServiceInfoV12Template.class.getSimpleName());
     }
 
     @Override

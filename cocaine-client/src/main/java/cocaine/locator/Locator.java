@@ -115,8 +115,6 @@ public final class Locator implements AutoCloseable {
         try {
             SessionV12<Value> session = service.invoke("resolve", Arrays.asList(name));
             return new Converter(session.rx().get()).read(ServiceInfoV12Template.create(name));
-            //byte[] result = service.invoke("resolve", name).toBlocking().single();
-            //return pack.read(result, ServiceInfoTemplate.create(name));
         } catch (Exception e) {
             throw new LocatorResolveException(name, endpoint, e);
         }
