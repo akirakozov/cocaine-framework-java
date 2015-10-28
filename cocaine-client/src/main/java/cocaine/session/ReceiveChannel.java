@@ -1,6 +1,7 @@
 package cocaine.session;
 
 import cocaine.ServiceException;
+import cocaine.UnexpectedServiceMessageException;
 import cocaine.api.TransactionTree;
 import cocaine.api.TransactionTree.TransactionInfo;
 import cocaine.session.protocol.CocaineProtocol;
@@ -10,6 +11,7 @@ import rx.subjects.ReplaySubject;
 import rx.subjects.Subject;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,19 +59,21 @@ public class ReceiveChannel<T> {
     }
 
     void onRead(int type, Value payload) {
-        TransactionInfo info = rxTree.getInfo(type).get();
-        if (info == null) {
+        Optional<TransactionInfo> info = rxTree.getInfo(type);
+        if (!info.isPresent()) {
             isDone.set(true);
-            subject.onError(new ServiceException(serviceName, "Unknown message type: " + type));
+            subject.onError(new UnexpectedServiceMessageException(serviceName, type));
             logger.error("Unknown message type: " + type + ", for service " + serviceName);
-        }
-        subject.onNext(new ResultMessage(info.getMessageName(), payload));
-        if (!info.getTree().isCycle()) {
-            if (info.getTree().isEmpty()) {
-                onCompleted();
-                logger.info("Last message received");
-            } else {
-                rxTree = info.getTree();
+        } else {
+            subject.onNext(new ResultMessage(info.get().getMessageName(), payload));
+            TransactionTree tree = info.get().getTree();
+            if (!tree.isCycle()) {
+                if (tree.isEmpty()) {
+                    onCompleted();
+                    logger.info("Last message received");
+                } else {
+                    rxTree = tree;
+                }
             }
         }
     }
