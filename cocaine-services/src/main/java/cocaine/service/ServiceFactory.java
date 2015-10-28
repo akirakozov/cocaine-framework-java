@@ -95,6 +95,18 @@ public class ServiceFactory {
         return (Class<?>) type.getActualTypeArguments()[0];
     }
 
+    private CocainePayloadDeserializer findDeserializer(CocaineMethodV12 methodDescriptor, Class<?> resultClass) {
+        if (Void.class.isAssignableFrom(resultClass)) {
+            return new VoidCocainePayloadDeserializer();
+        } else {
+            return deserializerFactories.stream()
+                    .filter(f -> methodDescriptor.deserializerFactory().isInstance(f))
+                    .findFirst()
+                    .map(f -> f.createDeserializer(resultClass))
+                    .orElseThrow(() -> new RuntimeException("Couldn't find deserializer"));
+        }
+    }
+
     private abstract class CocaineMethodHandler implements MethodHandler {
 
         private final ServiceV12 service;
@@ -119,12 +131,7 @@ public class ServiceFactory {
             Invokable<?, Object> invokable = Invokable.from(thisMethod);
             Parameter[] parameters = Iterables.toArray(invokable.getParameters(), Parameter.class);
             Class<?> resultClass = getResultType(invokable.getReturnType());
-            CocainePayloadDeserializer deserializer =
-                    deserializerFactories.stream().filter(
-                            f -> methodDescriptor.deserializerFactory().isInstance(f))
-                    .findFirst()
-                    .map(f -> f.createDeserializer(resultClass))
-                    .orElseThrow(() -> new RuntimeException("Couldn't find deserializer"));
+            CocainePayloadDeserializer deserializer = findDeserializer(methodDescriptor, resultClass);
 
 
             String method = getMethod(thisMethod);
