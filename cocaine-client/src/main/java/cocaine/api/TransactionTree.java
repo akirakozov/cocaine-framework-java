@@ -34,6 +34,9 @@ public class TransactionTree {
     }
 
     public boolean isEmpty() {
+        if (isCycle()) {
+            return false;
+        }
         return transactions.isEmpty();
     }
 

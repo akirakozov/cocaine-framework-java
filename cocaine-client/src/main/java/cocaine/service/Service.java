@@ -6,6 +6,7 @@ import cocaine.netty.ServiceMessageHandler;
 import cocaine.session.*;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
 import cocaine.session.protocol.DefaultCocaineProtocolRegistry;
+import cocaine.session.protocol.PrimitiveProtocol;
 import com.google.common.base.Supplier;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -16,6 +17,7 @@ import org.msgpack.type.Value;
 
 import java.net.SocketAddress;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -76,6 +78,13 @@ public class Service implements  AutoCloseable {
         InvocationUtils.invoke(channel, session.getId(), api.getMessageId(method), args);
 
         return session;
+    }
+
+    public boolean isPrimitiveApiMethod(String method) {
+        boolean isPrimitiveRxProtocol = Objects.equals(
+                PrimitiveProtocol.instance().getAllMessageTypes(),
+                api.getReceiveTree(method).getAllMessageTypes());
+        return isPrimitiveRxProtocol && api.getTransmitTree(method).isEmpty();
     }
 
     @Override

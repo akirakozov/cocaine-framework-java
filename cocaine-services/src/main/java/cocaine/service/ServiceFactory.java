@@ -85,17 +85,21 @@ public class ServiceFactory {
         return method.getName().equals("toString") && method.getParameterTypes().length == 0;
     }
 
-    private static Class<?> getResultType(TypeToken<?> returnType) {
-        Preconditions.checkArgument(Session.class.isAssignableFrom(returnType.getRawType()),
-                "Method result type should be parametrized Session<> value");
-        Preconditions.checkArgument(returnType.getType() instanceof ParameterizedType,
-                "Method result type should be parametrized Session<> value");
-        ParameterizedType type = (ParameterizedType) returnType.getType();
-        return (Class<?>) type.getActualTypeArguments()[0];
+    private static Class<?> getResultType(TypeToken<?> returnType, boolean isPrimitiveMethod) {
+        if (isPrimitiveMethod) {
+            return returnType.getRawType();
+        } else {
+            Preconditions.checkArgument(Session.class.isAssignableFrom(returnType.getRawType()),
+                    "Method result type should be parametrized Session<> value");
+            Preconditions.checkArgument(returnType.getType() instanceof ParameterizedType,
+                    "Method result type should be parametrized Session<> value");
+            ParameterizedType type = (ParameterizedType) returnType.getType();
+            return (Class<?>) type.getActualTypeArguments()[0];
+        }
     }
 
     private CocainePayloadDeserializer findDeserializer(CocaineMethodV12 methodDescriptor, Class<?> resultClass) {
-        if (Void.class.isAssignableFrom(resultClass)) {
+        if (Void.class.isAssignableFrom(resultClass) || resultClass.equals(Void.TYPE)) {
             return new VoidCocainePayloadDeserializer();
         } else {
             return deserializerFactories.stream()
@@ -126,17 +130,24 @@ public class ServiceFactory {
             final CocaineMethodV12 methodDescriptor = Preconditions.checkNotNull(
                     thisMethod.getAnnotation(CocaineMethodV12.class),
                     "Service method must be annotated with @CocaineMethod annotation");
+            String method = getMethod(thisMethod);
+            boolean isPrimitiveMethod = service.isPrimitiveApiMethod(method);
 
             Invokable<?, Object> invokable = Invokable.from(thisMethod);
             Parameter[] parameters = Iterables.toArray(invokable.getParameters(), Parameter.class);
-            Class<?> resultClass = getResultType(invokable.getReturnType());
+            Class<?> resultClass = getResultType(invokable.getReturnType(), isPrimitiveMethod);
             CocainePayloadDeserializer deserializer = findDeserializer(methodDescriptor, resultClass);
 
-
-            String method = getMethod(thisMethod);
             List<Object> arguments = getArgs(thisMethod, parameters, args);
 
-            return service.invoke(method, deserializer, arguments);
+            if (isPrimitiveMethod) {
+                // return value directly for primitive value-error methods
+                try (Session<?> session = service.invoke(method, deserializer, arguments)) {
+                    return session.rx().get();
+                }
+            } else {
+                return service.invoke(method, deserializer, arguments);
+            }
         }
 
         protected abstract String getMethod(Method method);
