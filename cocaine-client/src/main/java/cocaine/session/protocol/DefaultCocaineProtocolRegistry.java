@@ -22,7 +22,7 @@ public class DefaultCocaineProtocolRegistry implements CocaineProtocolsRegistry 
         Set<String> values = rxTree.getAllMessageTypes();
         return protocols.stream()
                 .filter( p -> p.getAllMessageTypes().equals(values))
-                .findFirst().orElseGet(() -> new IdentityProtocol());
+                .findFirst().orElseGet(() -> IdentityProtocol.instance());
     }
 
     public static DefaultCocaineProtocolRegistry getDefaultRegistry() {
@@ -31,7 +31,7 @@ public class DefaultCocaineProtocolRegistry implements CocaineProtocolsRegistry 
 
     private static DefaultCocaineProtocolRegistry createDefaultCocaineRegistry() {
         return new DefaultCocaineProtocolRegistry(
-                Arrays.asList(new IdentityProtocol(), new PrimitiveProtocol(), new StreamingProtocol()));
+                Arrays.asList(PrimitiveProtocol.instance(), StreamingProtocol.instance()));
     }
 
 }

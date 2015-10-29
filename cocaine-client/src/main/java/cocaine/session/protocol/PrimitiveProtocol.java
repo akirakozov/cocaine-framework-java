@@ -16,6 +16,15 @@ public class PrimitiveProtocol implements CocaineProtocol {
     private static final String VALUE = "value";
     private static final String ERROR = "error";
 
+    private static PrimitiveProtocol instance = new PrimitiveProtocol();
+
+    private PrimitiveProtocol() {
+    }
+
+    public static PrimitiveProtocol instance() {
+        return instance;
+    }
+
     public Value handle(String service, String messageType, Value paylod) {
         if (!paylod.isArrayValue()) {
             throw new ServiceException(service, "Incorrect payload format: " + paylod.getType());

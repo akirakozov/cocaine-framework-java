@@ -10,6 +10,15 @@ import java.util.Set;
  */
 public class IdentityProtocol implements CocaineProtocol {
 
+    private static IdentityProtocol instance = new IdentityProtocol();
+
+    private IdentityProtocol() {
+    }
+
+    public static IdentityProtocol instance() {
+        return instance;
+    }
+
     @Override
     public Value handle(String service, String messageType, Value paylod) {
         return paylod;

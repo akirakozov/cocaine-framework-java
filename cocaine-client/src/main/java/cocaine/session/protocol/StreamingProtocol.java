@@ -16,6 +16,15 @@ public class StreamingProtocol implements CocaineProtocol {
     private static final String ERROR = "error";
     private static final String CLOSE = "close";
 
+    private static StreamingProtocol instance = new StreamingProtocol();
+
+    private StreamingProtocol() {
+    }
+
+    public static StreamingProtocol instance() {
+        return instance;
+    }
+
     public Value handle(String service, String messageType, Value paylod) {
         if (!paylod.isArrayValue()) {
             throw new ServiceException(service, "Incorrect payload format: " + paylod.getType());
