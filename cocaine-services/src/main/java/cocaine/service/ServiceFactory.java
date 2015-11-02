@@ -56,6 +56,11 @@ public class ServiceFactory {
         return create(type, new ServiceMethodHandler(service));
     }
 
+    public <T extends AutoCloseable> T createApp(Class<T> type) {
+        Service service = locator.service(getServiceName(type));
+        return create(type, new AppServiceMethodHandler(service));
+    }
+
     private static <T> String getServiceName(Class<T> type) {
         CocaineService service = Preconditions.checkNotNull(type.getAnnotation(CocaineService.class),
                 "Service interface must be annotated with @CocaineService annotation");
@@ -175,4 +180,30 @@ public class ServiceFactory {
         }
     }
 
+    private class AppServiceMethodHandler extends CocaineMethodHandler {
+
+        public AppServiceMethodHandler(Service service) {
+            super(service);
+        }
+
+        @Override
+        protected String getMethod(Method method) {
+            return "enqueue";
+        }
+
+        @Override
+        protected List<Object> getArgs(Method method, Parameter[] parameters, Object[] args) throws IOException {
+            CocaineMethodV12 methodDescriptor = Preconditions.checkNotNull(method.getAnnotation(CocaineMethodV12.class),
+                    "AppService method must be annotated with @CocaineMethod annotation");
+
+            String name = methodDescriptor.value().isEmpty() ? method.getName() : methodDescriptor.value();
+            CocaineSerializer serializer =
+                    serializers.stream()
+                    .filter(s -> methodDescriptor.serializer().isInstance(s))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Couldn't find serializer"));
+
+            return Arrays.asList(name, serializer.serialize(parameters, args));
+        }
+    }
 }
