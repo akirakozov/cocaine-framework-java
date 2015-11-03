@@ -135,9 +135,9 @@ public class Worker implements AutoCloseable {
 
         if (msg.getType() == MessageType.WRITE.value()) {
             byte[] data = msg.getPayload().asRawValue().getByteArray();
-            return Optional.of(Messages.chunk(msg.getSession(), data));
+            return Optional.of(Messages.write(msg.getSession(), data));
         } else if (msg.getType() == MessageType.CLOSE.value()) {
-            return Optional.of(Messages.choke(msg.getSession()));
+            return Optional.of(Messages.close(msg.getSession()));
         } else if (msg.getType() == MessageType.ERROR.value()) {
             // TODO: read error code and message from payload
             return Optional.of(Messages.error(msg.getSession(), 0, ""));
@@ -210,11 +210,11 @@ public class Worker implements AutoCloseable {
     }
 
     void sendChoke(long session) {
-        this.write(Messages.choke(session));
+        this.write(Messages.close(session));
     }
 
     void sendChunk(long session, byte[] data) {
-        this.write(Messages.chunk(session, data));
+        this.write(Messages.write(session, data));
     }
 
     void sendError(long session, int code, String message) {

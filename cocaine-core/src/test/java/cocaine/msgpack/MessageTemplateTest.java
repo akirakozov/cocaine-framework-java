@@ -74,7 +74,7 @@ public class MessageTemplateTest {
     public void writeWriteMessage() throws IOException {
         long session = 1L;
         byte[] data = new byte[] { 1, 2, 3, 4, 5 };
-        Message msg = Messages.chunk(session, data);
+        Message msg = Messages.write(session, data);
         byte[] bytes = pack.write(Arrays.asList(session, 0, Collections.singletonList(data)));
 
         byte[] result = pack.write(msg, MessageTemplate.getInstance());
@@ -98,7 +98,7 @@ public class MessageTemplateTest {
     @Test
     public void writeCloseMessage() throws IOException {
         long session = 1L;
-        Message msg = Messages.choke(session);
+        Message msg = Messages.close(session);
         byte[] bytes = pack.write(Arrays.asList(session, 2, Arrays.asList()));
 
         byte[] result = pack.write(msg, MessageTemplate.getInstance());

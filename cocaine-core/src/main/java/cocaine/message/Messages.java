@@ -23,11 +23,11 @@ public final class Messages {
         return new InvokeMessage(session, event);
     }
 
-    public static Message chunk(long session, byte[] data) {
+    public static Message write(long session, byte[] data) {
         return new WriteMessage(session, data);
     }
 
-    public static Message choke(long session) {
+    public static Message close(long session) {
         return new CloseMessage(session);
     }
 
