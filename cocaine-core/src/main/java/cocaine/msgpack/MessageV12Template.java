@@ -37,6 +37,7 @@ public final class MessageV12Template<T> extends AbstractTemplate<MessageV12> {
         long session = unpacker.readLong();
         int messageType = unpacker.readInt();
         Value payload = unpacker.readValue();
+        unpacker.readArrayEnd();
 
         return new MessageV12(messageType, session, payload);
     }
