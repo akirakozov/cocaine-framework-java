@@ -26,8 +26,8 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
     @Override
     public void write(Packer packer, Message message, boolean required) throws IOException {
         packer.writeArrayBegin(3);
-        packer.write(message.getType().value());
         packer.write(message.getSession());
+        packer.write(message.getType().value());
 
         switch (message.getType()) {
             case HANDSHAKE: {
@@ -80,58 +80,7 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
 
     @Override
     public Message read(Unpacker unpacker, Message message, boolean required) throws IOException {
-        Message result;
-
-        unpacker.readArrayBegin();
-        //MessageType type = MessageType.fromValue(unpacker.readInt());
-        MessageType type = MessageType.CLOSE;
-        long session = unpacker.readLong();
-
-        unpacker.readArrayBegin();
-        switch (type) {
-            case HANDSHAKE: {
-                UUID id = unpacker.read(UUIDTemplate.getInstance());
-                result = Messages.handshake(id);
-                break;
-            }
-            case HEARTBEAT: {
-                result = Messages.heartbeat();
-                break;
-            }
-            case TERMINATE: {
-                TerminateMessage.Reason reason = TerminateMessage.Reason.fromValue(unpacker.readInt());
-                String msg = unpacker.readString();
-                result = Messages.terminate(reason, msg);
-                break;
-            }
-            case INVOKE: {
-                String event = unpacker.readString();
-                result = Messages.invoke(session, event);
-                break;
-            }
-            case WRITE: {
-                byte[] data = unpacker.readByteArray();
-                result = Messages.chunk(session, data);
-                break;
-            }
-            case ERROR: {
-                int code = unpacker.readInt();
-                String msg = unpacker.readString();
-                result = Messages.error(session, code, msg);
-                break;
-            }
-            case CLOSE: {
-                result = Messages.choke(session);
-                break;
-            }
-            default: {
-                throw new IllegalArgumentException("Unknown message type: " + type.name());
-            }
-        }
-        unpacker.readArrayEnd();
-        unpacker.readArrayEnd();
-
-        return result;
+        throw new UnsupportedOperationException();
     }
 
 }
