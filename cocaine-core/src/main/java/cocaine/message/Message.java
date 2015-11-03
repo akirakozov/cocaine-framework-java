@@ -5,7 +5,7 @@ package cocaine.message;
  */
 public abstract class Message {
 
-    private static final long SYSTEM_SESSION = 0L;
+    private static final long SYSTEM_SESSION = 1L;
 
     private final MessageType type;
     private final long session;

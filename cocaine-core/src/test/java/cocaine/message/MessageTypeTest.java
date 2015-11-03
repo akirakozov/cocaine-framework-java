@@ -25,13 +25,13 @@ public class MessageTypeTest {
         Assert.assertEquals(MessageType.INVOKE, result);
 
         result = MessageType.fromValue(4);
-        Assert.assertEquals(MessageType.CHUNK, result);
+        Assert.assertEquals(MessageType.WRITE, result);
 
         result = MessageType.fromValue(5);
         Assert.assertEquals(MessageType.ERROR, result);
 
         result = MessageType.fromValue(6);
-        Assert.assertEquals(MessageType.CHOKE, result);
+        Assert.assertEquals(MessageType.CLOSE, result);
     }
 
     @Test(expected = IllegalArgumentException.class)

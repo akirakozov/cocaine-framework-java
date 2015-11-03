@@ -3,14 +3,8 @@ package cocaine.msgpack;
 import java.io.IOException;
 import java.util.UUID;
 
-import cocaine.message.ChunkMessage;
-import cocaine.message.ErrorMessage;
-import cocaine.message.HandshakeMessage;
-import cocaine.message.InvokeMessage;
-import cocaine.message.Message;
-import cocaine.message.MessageType;
-import cocaine.message.Messages;
-import cocaine.message.TerminateMessage;
+import cocaine.message.*;
+import cocaine.message.WriteMessage;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
@@ -58,8 +52,8 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
                 packer.writeArrayEnd();
                 break;
             }
-            case CHUNK: {
-                ChunkMessage chunkMessage = (ChunkMessage) message;
+            case WRITE: {
+                WriteMessage chunkMessage = (WriteMessage) message;
                 packer.writeArrayBegin(1);
                 packer.write(chunkMessage.getData());
                 packer.writeArrayEnd();
@@ -74,7 +68,7 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
                 break;
             }
             case HEARTBEAT:
-            case CHOKE: {
+            case CLOSE: {
                 packer.writeArrayBegin(0);
                 packer.writeArrayEnd();
                 break;
@@ -89,7 +83,8 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
         Message result;
 
         unpacker.readArrayBegin();
-        MessageType type = MessageType.fromValue(unpacker.readInt());
+        //MessageType type = MessageType.fromValue(unpacker.readInt());
+        MessageType type = MessageType.CLOSE;
         long session = unpacker.readLong();
 
         unpacker.readArrayBegin();
@@ -114,7 +109,7 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
                 result = Messages.invoke(session, event);
                 break;
             }
-            case CHUNK: {
+            case WRITE: {
                 byte[] data = unpacker.readByteArray();
                 result = Messages.chunk(session, data);
                 break;
@@ -125,7 +120,7 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
                 result = Messages.error(session, code, msg);
                 break;
             }
-            case CHOKE: {
+            case CLOSE: {
                 result = Messages.choke(session);
                 break;
             }

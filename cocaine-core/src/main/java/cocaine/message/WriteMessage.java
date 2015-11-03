@@ -7,12 +7,12 @@ import com.google.common.base.Preconditions;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class ChunkMessage extends Message {
+public final class WriteMessage extends Message {
 
     private final byte[] data;
 
-    public ChunkMessage(long session, byte[] data) {
-        super(MessageType.CHUNK, session);
+    public WriteMessage(long session, byte[] data) {
+        super(MessageType.WRITE, session);
         Preconditions.checkNotNull(data, "CHunk data can not be null");
 
         this.data = data;
@@ -24,7 +24,7 @@ public final class ChunkMessage extends Message {
 
     @Override
     public String toString() {
-        return "ChunkMessage/" + getSession() + ": " + Arrays.toString(data);
+        return "WriteMessage/" + getSession() + ": " + Arrays.toString(data);
     }
 
     @Override
@@ -39,7 +39,7 @@ public final class ChunkMessage extends Message {
             return false;
         }
 
-        ChunkMessage that = (ChunkMessage) o;
+        WriteMessage that = (WriteMessage) o;
         return Arrays.equals(data, that.data);
     }
 

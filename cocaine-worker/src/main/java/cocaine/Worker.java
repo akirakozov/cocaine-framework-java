@@ -5,15 +5,9 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import cocaine.message.ChokeMessage;
-import cocaine.message.ChunkMessage;
-import cocaine.message.ErrorMessage;
-import cocaine.message.HeartbeatMessage;
-import cocaine.message.InvokeMessage;
-import cocaine.message.Message;
-import cocaine.message.Messages;
-import cocaine.message.TerminateMessage;
-import cocaine.msgpack.MessageTemplate;
+import cocaine.message.*;
+import cocaine.messagev12.MessageV12;
+import cocaine.msgpack.MessageV12Template;
 import com.etsy.net.JUDS;
 import com.etsy.net.UnixDomainSocket;
 import com.etsy.net.UnixDomainSocketClient;
@@ -35,6 +29,7 @@ public class Worker implements AutoCloseable {
     private final WorkerOptions options;
     private final Map<String, EventHandler> handlers;
     private final WorkerSessions sessions;
+    private final long maxSession;
     private final Timer heartbeats;
     private final Timer disowns;
     private final Dispatcher dispatcher;
@@ -44,10 +39,11 @@ public class Worker implements AutoCloseable {
 
     Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
         this.pack = new MessagePack();
-        this.pack.register(Message.class, MessageTemplate.getInstance());
+        this.pack.register(MessageV12.class, MessageV12Template.getInstance());
         this.options = options;
         this.handlers = handlers;
         this.sessions = new WorkerSessions(this);
+        this.maxSession = 0L;
         this.heartbeats = new Timer(getThreadName("Worker Heartbeats"), true);
         this.disowns = new Timer(getThreadName("Worker Disown"), true);
         this.dispatcher = new Dispatcher();
@@ -84,29 +80,40 @@ public class Worker implements AutoCloseable {
         stop();
     }
 
-    private void dispatch(Message msg) {
-        switch (msg.getType()) {
-            case HEARTBEAT:
-                dispatchHeartbeat((HeartbeatMessage) msg);
-                break;
-            case TERMINATE:
-                dispatchTerminate((TerminateMessage) msg);
-                break;
-            case INVOKE:
-                dispatchInvoke((InvokeMessage) msg);
-                break;
-            case CHUNK:
-                dispatchChunk((ChunkMessage) msg);
-                break;
-            case CHOKE:
-                dispatchChoke((ChokeMessage) msg);
-                break;
-            case ERROR:
-                dispatchError((ErrorMessage) msg);
-                break;
-            default:
-                logger.warn("Unexpected message type: " + msg.getType());
-                throw new UnexpectedClientMessageException(options.getApplication(), msg);
+    private void dispatch(MessageV12 msg) {
+        if (msg.getSession() == 1) {
+            if (msg.getType() == MessageType.HEARTBEAT.value()) {
+                dispatchHeartbeat(new HeartbeatMessage());
+            } else if (msg.getType() == MessageType.TERMINATE.value()) {
+                // TODO: read reason and message from payload
+                dispatchTerminate(new TerminateMessage(TerminateMessage.Reason.NORMAL, ""));
+            } else {
+                logger.warn("Unexpected message type " + msg.getType() + " on session" + msg.getSession());
+            }
+            return;
+        }
+
+        if (maxSession < msg.getSession()) {
+            if (msg.getType() == MessageType.INVOKE.value()) {
+                String event = msg.getPayload().asRawValue().getString();
+                dispatchInvoke(new InvokeMessage(msg.getSession(), event));
+            } else {
+                logger.warn("New session must " + msg.getSession()
+                        + " start from invoke instead of " + msg.getType());
+            }
+            return;
+        }
+
+        if (msg.getType() == MessageType.WRITE.value()) {
+            byte[] data = msg.getPayload().asRawValue().getByteArray();
+            dispatchWrite(new WriteMessage(msg.getSession(), data));
+        } else if (msg.getType() == MessageType.CLOSE.value()) {
+            dispatchClose(new CloseMessage(msg.getSession()));
+        } else if (msg.getType() == MessageType.ERROR.value()) {
+            // TODO: read error code and message from payload
+            dispatchError(new ErrorMessage(msg.getSession(), 0, ""));
+        } else {
+            logger.warn("Unexpected message type " + msg.getType() + " on session" + msg.getSession());
         }
     }
 
@@ -142,7 +149,7 @@ public class Worker implements AutoCloseable {
         }
     }
 
-    private void dispatchChunk(ChunkMessage msg) {
+    private void dispatchWrite(WriteMessage msg) {
         logger.debug("Chunk has been received " + msg.getSession());
         try {
             this.sessions.onChunk(msg.getSession(), msg.getData());
@@ -151,7 +158,7 @@ public class Worker implements AutoCloseable {
         }
     }
 
-    private void dispatchChoke(ChokeMessage msg) {
+    private void dispatchClose(CloseMessage msg) {
         logger.debug("Choke has been received " + msg.getSession());
         this.sessions.onCompleted(msg.getSession());
     }
@@ -232,7 +239,7 @@ public class Worker implements AutoCloseable {
             try {
                 Unpacker unpacker = pack.createUnpacker(Worker.this.socket.getInputStream());
                 while (true) {
-                    Worker.this.dispatch(unpacker.read(Message.class));
+                    Worker.this.dispatch(unpacker.read(MessageV12.class));
                 }
             } catch (Exception e) {
                 if (!isInterrupted()) {

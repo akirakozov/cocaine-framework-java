@@ -24,11 +24,11 @@ public final class Messages {
     }
 
     public static Message chunk(long session, byte[] data) {
-        return new ChunkMessage(session, data);
+        return new WriteMessage(session, data);
     }
 
     public static Message choke(long session) {
-        return new ChokeMessage(session);
+        return new CloseMessage(session);
     }
 
     public static Message error(long session, int code, String message) {
