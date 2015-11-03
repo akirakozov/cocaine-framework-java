@@ -1,17 +1,17 @@
 package cocaine.annotations;
 
+import cocaine.CocainePayloadDeserializerFactory;
+import cocaine.CocaineSerializer;
+import cocaine.MessagePackDeserializerFactory;
+import cocaine.MessagePackSerializer;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import cocaine.CocaineDeserializer;
-import cocaine.CocaineSerializer;
-import cocaine.MessagePackDeserializer;
-import cocaine.MessagePackSerializer;
-
 /**
- * @author Anton Bobukh <abobukh@yandex-team.ru>
+ * @author akirakozov
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -21,8 +21,7 @@ public @interface CocaineMethod {
 
     Class<? extends CocaineSerializer> serializer() default MessagePackSerializer.class;
 
-    Class<? extends CocaineDeserializer> deserializer() default MessagePackDeserializer.class;
-
-    boolean raw() default false;
+    Class<? extends CocainePayloadDeserializerFactory> deserializerFactory()
+            default MessagePackDeserializerFactory.class;
 
 }

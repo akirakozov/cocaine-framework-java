@@ -1,6 +1,6 @@
 package cocaine;
 
-import cocaine.annotations.CocaineMethodV12;
+import cocaine.annotations.CocaineMethod;
 import cocaine.annotations.CocaineService;
 import cocaine.locator.Locator;
 import cocaine.service.Service;
@@ -103,7 +103,7 @@ public class ServiceFactory {
         }
     }
 
-    private CocainePayloadDeserializer findDeserializer(CocaineMethodV12 methodDescriptor, Class<?> resultClass) {
+    private CocainePayloadDeserializer findDeserializer(CocaineMethod methodDescriptor, Class<?> resultClass) {
         if (Void.class.isAssignableFrom(resultClass) || resultClass.equals(Void.TYPE)) {
             return new VoidCocainePayloadDeserializer();
         } else {
@@ -132,8 +132,8 @@ public class ServiceFactory {
                 return null;
             }
 
-            final CocaineMethodV12 methodDescriptor = Preconditions.checkNotNull(
-                    thisMethod.getAnnotation(CocaineMethodV12.class),
+            final CocaineMethod methodDescriptor = Preconditions.checkNotNull(
+                    thisMethod.getAnnotation(CocaineMethod.class),
                     "Service method must be annotated with @CocaineMethod annotation");
             String method = getMethod(thisMethod);
             boolean isPrimitiveMethod = service.isPrimitiveApiMethod(method);
@@ -169,7 +169,7 @@ public class ServiceFactory {
 
         @Override
         protected String getMethod(Method method) {
-            CocaineMethodV12 methodDescriptor = Preconditions.checkNotNull(method.getAnnotation(CocaineMethodV12.class),
+            CocaineMethod methodDescriptor = Preconditions.checkNotNull(method.getAnnotation(CocaineMethod.class),
                     "Service method must be annotated with @CocaineMethod annotation");
             return methodDescriptor.value().isEmpty() ? method.getName() : methodDescriptor.value();
         }
@@ -193,7 +193,7 @@ public class ServiceFactory {
 
         @Override
         protected List<Object> getArgs(Method method, Parameter[] parameters, Object[] args) throws IOException {
-            CocaineMethodV12 methodDescriptor = Preconditions.checkNotNull(method.getAnnotation(CocaineMethodV12.class),
+            CocaineMethod methodDescriptor = Preconditions.checkNotNull(method.getAnnotation(CocaineMethod.class),
                     "AppService method must be annotated with @CocaineMethod annotation");
 
             String name = methodDescriptor.value().isEmpty() ? method.getName() : methodDescriptor.value();
