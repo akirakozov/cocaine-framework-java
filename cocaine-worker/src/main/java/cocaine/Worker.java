@@ -2,6 +2,7 @@ package cocaine;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -80,41 +81,69 @@ public class Worker implements AutoCloseable {
         stop();
     }
 
-    private void dispatch(MessageV12 msg) {
+    private void dispatch(MessageV12 message) {
+        Optional<Message> workerMessage = toWorkerMessage(message);
+
+        if (!workerMessage.isPresent()) {
+            logger.warn("Unexpected message type " + message.getType() + " on session" + message.getSession());
+            return;
+        }
+        Message msg = workerMessage.get();
+
+        switch (msg.getType()) {
+            case HEARTBEAT:
+                dispatchHeartbeat((HeartbeatMessage) msg);
+                break;
+            case TERMINATE:
+                dispatchTerminate((TerminateMessage) msg);
+                break;
+            case INVOKE:
+                dispatchInvoke((InvokeMessage) msg);
+                break;
+            case WRITE:
+                dispatchWrite((WriteMessage) msg);
+                break;
+            case CLOSE:
+                dispatchClose((CloseMessage) msg);
+                break;
+            case ERROR:
+                dispatchError((ErrorMessage) msg);
+                break;
+            default:
+                logger.warn("Unexpected message type: " + msg.getType());
+        }
+    }
+
+    private Optional<Message> toWorkerMessage(MessageV12 msg) {
         if (msg.getSession() == 1) {
             if (msg.getType() == MessageType.HEARTBEAT.value()) {
-                dispatchHeartbeat(new HeartbeatMessage());
+                return Optional.of(Messages.heartbeat());
             } else if (msg.getType() == MessageType.TERMINATE.value()) {
                 // TODO: read reason and message from payload
-                dispatchTerminate(new TerminateMessage(TerminateMessage.Reason.NORMAL, ""));
-            } else {
-                logger.warn("Unexpected message type " + msg.getType() + " on session" + msg.getSession());
+                return Optional.of(Messages.terminate(TerminateMessage.Reason.NORMAL, ""));
             }
-            return;
+            return Optional.empty();
         }
 
         if (maxSession < msg.getSession()) {
             if (msg.getType() == MessageType.INVOKE.value()) {
                 String event = msg.getPayload().asRawValue().getString();
-                dispatchInvoke(new InvokeMessage(msg.getSession(), event));
-            } else {
-                logger.warn("New session must " + msg.getSession()
-                        + " start from invoke instead of " + msg.getType());
+                return Optional.of(Messages.invoke(msg.getSession(), event));
             }
-            return;
+            return Optional.empty();
         }
 
         if (msg.getType() == MessageType.WRITE.value()) {
             byte[] data = msg.getPayload().asRawValue().getByteArray();
-            dispatchWrite(new WriteMessage(msg.getSession(), data));
+            return Optional.of(Messages.chunk(msg.getSession(), data));
         } else if (msg.getType() == MessageType.CLOSE.value()) {
-            dispatchClose(new CloseMessage(msg.getSession()));
+            return Optional.of(Messages.choke(msg.getSession()));
         } else if (msg.getType() == MessageType.ERROR.value()) {
             // TODO: read error code and message from payload
-            dispatchError(new ErrorMessage(msg.getSession(), 0, ""));
-        } else {
-            logger.warn("Unexpected message type " + msg.getType() + " on session" + msg.getSession());
+            return Optional.of(Messages.error(msg.getSession(), 0, ""));
         }
+
+        return Optional.empty();
     }
 
     private void dispatchHeartbeat(HeartbeatMessage msg) {
