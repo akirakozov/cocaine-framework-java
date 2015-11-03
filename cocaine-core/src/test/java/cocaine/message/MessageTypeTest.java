@@ -9,33 +9,14 @@ import org.junit.Test;
 public class MessageTypeTest {
 
     @Test
-    public void fromValue() {
-        MessageType result;
-
-        result = MessageType.fromValue(0);
-        Assert.assertEquals(MessageType.HANDSHAKE, result);
-
-        result = MessageType.fromValue(1);
-        Assert.assertEquals(MessageType.HEARTBEAT, result);
-
-        result = MessageType.fromValue(2);
-        Assert.assertEquals(MessageType.TERMINATE, result);
-
-        result = MessageType.fromValue(3);
-        Assert.assertEquals(MessageType.INVOKE, result);
-
-        result = MessageType.fromValue(4);
-        Assert.assertEquals(MessageType.WRITE, result);
-
-        result = MessageType.fromValue(5);
-        Assert.assertEquals(MessageType.ERROR, result);
-
-        result = MessageType.fromValue(6);
-        Assert.assertEquals(MessageType.CLOSE, result);
+    public void checkValue() {
+        Assert.assertEquals(MessageType.HANDSHAKE.value(), 0);
+        Assert.assertEquals(MessageType.HEARTBEAT.value(), 0);
+        Assert.assertEquals(MessageType.TERMINATE.value(), 1);
+        Assert.assertEquals(MessageType.INVOKE.value(), 0);
+        Assert.assertEquals(MessageType.WRITE.value(), 0);
+        Assert.assertEquals(MessageType.ERROR.value(), 1);
+        Assert.assertEquals(MessageType.CLOSE.value(), 2);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void fromValueOutOfRange() {
-        MessageType.fromValue(7);
-    }
 }
