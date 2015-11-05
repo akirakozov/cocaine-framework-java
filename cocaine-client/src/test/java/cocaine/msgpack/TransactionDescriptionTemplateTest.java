@@ -5,10 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.msgpack.MessagePack;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author akirakozov
@@ -29,8 +26,8 @@ public class TransactionDescriptionTemplateTest {
 
         TransactionDescription d = pack.read(bytes, TransactionDescriptionTemplate.getInstance());
         Assert.assertEquals("verbosity", d.getMessageName());
-        Assert.assertEquals(0, d.getReceiveTree().getMessageId("value"));
-        Assert.assertEquals(1, d.getReceiveTree().getMessageId("error"));
+        Assert.assertEquals(Optional.of(0), d.getReceiveTree().getMessageId("value"));
+        Assert.assertEquals(Optional.of(1), d.getReceiveTree().getMessageId("error"));
 
         Assert.assertTrue(d.getTransmitTree().isEmpty());
     }

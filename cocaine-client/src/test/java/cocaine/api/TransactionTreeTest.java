@@ -13,8 +13,8 @@ public class TransactionTreeTest {
     @Test
     public void getMessageId() throws Exception {
         TransactionTree tree = TransactionTree.SIMPLE_VALUE;
-        Assert.assertEquals(tree.getMessageId("value"), 0);
-        Assert.assertEquals(tree.getMessageId("error"), 1);
+        Assert.assertEquals(Optional.of(0), tree.getMessageId("value"));
+        Assert.assertEquals(Optional.of(1), tree.getMessageId("error"));
     }
 
     @Test

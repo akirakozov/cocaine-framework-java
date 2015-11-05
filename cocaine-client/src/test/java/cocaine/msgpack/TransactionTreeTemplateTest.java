@@ -5,10 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.msgpack.MessagePack;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author akirakozov
@@ -29,8 +26,8 @@ public class TransactionTreeTemplateTest {
 
         Assert.assertNotNull(info);
         Assert.assertEquals("value", info.getMessageName());
-        Assert.assertEquals(0, trTree.getMessageId("value"));
-        Assert.assertEquals(1, trTree.getMessageId("error"));
+        Assert.assertEquals(Optional.of(0), trTree.getMessageId("value"));
+        Assert.assertEquals(Optional.of(1), trTree.getMessageId("error"));
     }
 
     @Test
@@ -49,7 +46,7 @@ public class TransactionTreeTemplateTest {
         Assert.assertNotNull(info);
         Assert.assertEquals("write", info.getMessageName());
         Assert.assertTrue(info.getTree().isCycle());
-        Assert.assertEquals(0, trTree.getMessageId("write"));
-        Assert.assertEquals(1, trTree.getMessageId("error"));
+        Assert.assertEquals(Optional.of(0), trTree.getMessageId("write"));
+        Assert.assertEquals(Optional.of(1), trTree.getMessageId("error"));
     }
 }
