@@ -1,6 +1,7 @@
 package cocaine;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 import cocaine.message.*;
@@ -239,6 +240,10 @@ public class Worker implements AutoCloseable {
         return String.format("[%s] [%s] %s", options.getName(), options.getUuid(), name);
     }
 
+    protected InputStream getSocketInputStream() {
+        return socket.getInputStream();
+    }
+
     private final class Heartbeat extends TimerTask {
 
         @Override
@@ -267,7 +272,7 @@ public class Worker implements AutoCloseable {
         @Override
         public void run() {
             try {
-                Unpacker unpacker = pack.createUnpacker(Worker.this.socket.getInputStream());
+                Unpacker unpacker = pack.createUnpacker(getSocketInputStream());
                 while (true) {
                     Worker.this.dispatch(unpacker.read(MessageV12.class));
                 }
