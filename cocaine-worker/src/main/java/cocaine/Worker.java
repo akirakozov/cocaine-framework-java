@@ -1,13 +1,11 @@
 package cocaine;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import cocaine.message.*;
 import cocaine.messagev12.MessageV12;
+import cocaine.msgpack.MessageTemplate;
 import cocaine.msgpack.MessageV12Template;
 import com.etsy.net.JUDS;
 import com.etsy.net.UnixDomainSocket;
@@ -30,10 +28,10 @@ public class Worker implements AutoCloseable {
     private final WorkerOptions options;
     private final Map<String, EventHandler> handlers;
     private final WorkerSessions sessions;
-    private final long maxSession;
     private final Timer heartbeats;
     private final Timer disowns;
     private final Dispatcher dispatcher;
+    private long maxSession;
 
     private UnixDomainSocket socket;
     private Disown disown;
@@ -41,6 +39,7 @@ public class Worker implements AutoCloseable {
     Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
         this.pack = new MessagePack();
         this.pack.register(MessageV12.class, MessageV12Template.getInstance());
+        this.pack.register(Message.class, MessageTemplate.getInstance());
         this.options = options;
         this.handlers = handlers;
         this.sessions = new WorkerSessions(this);
@@ -89,6 +88,7 @@ public class Worker implements AutoCloseable {
             return;
         }
         Message msg = workerMessage.get();
+        logger.info(msg);
 
         switch (msg.getType()) {
             case HEARTBEAT:
@@ -126,15 +126,16 @@ public class Worker implements AutoCloseable {
         }
 
         if (maxSession < msg.getSession()) {
+            maxSession = msg.getSession();
             if (msg.getType() == MessageType.INVOKE.value()) {
-                String event = msg.getPayload().asRawValue().getString();
+                String event = msg.getPayload().asArrayValue().get(0).asRawValue().getString();
                 return Optional.of(Messages.invoke(msg.getSession(), event));
             }
             return Optional.empty();
         }
 
         if (msg.getType() == MessageType.WRITE.value()) {
-            byte[] data = msg.getPayload().asRawValue().getByteArray();
+            byte[] data = msg.getPayload().asArrayValue().get(0).asRawValue().getByteArray();
             return Optional.of(Messages.write(msg.getSession(), data));
         } else if (msg.getType() == MessageType.CLOSE.value()) {
             return Optional.of(Messages.close(msg.getSession()));
