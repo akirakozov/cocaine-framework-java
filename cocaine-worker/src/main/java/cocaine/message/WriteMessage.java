@@ -7,7 +7,7 @@ import com.google.common.base.Preconditions;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class WriteMessage extends Message {
+public final class WriteMessage extends WorkerMessage {
 
     private final byte[] data;
 

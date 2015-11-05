@@ -3,19 +3,19 @@ package cocaine.message;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public abstract class Message {
+public abstract class WorkerMessage {
 
     private static final long SYSTEM_SESSION = 1L;
 
     private final MessageType type;
     private final long session;
 
-    protected Message(MessageType type, long session) {
+    protected WorkerMessage(MessageType type, long session) {
         this.type = type;
         this.session = session;
     }
 
-    protected Message(MessageType type) {
+    protected WorkerMessage(MessageType type) {
         this(type, SYSTEM_SESSION);
     }
 
@@ -36,7 +36,7 @@ public abstract class Message {
             return false;
         }
 
-        Message message = (Message) o;
+        WorkerMessage message = (WorkerMessage) o;
         return session == message.session && type == message.type;
     }
 

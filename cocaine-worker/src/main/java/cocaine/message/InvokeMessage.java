@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class InvokeMessage extends Message {
+public final class InvokeMessage extends WorkerMessage {
 
     private final String event;
 

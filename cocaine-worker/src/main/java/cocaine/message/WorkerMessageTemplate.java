@@ -10,18 +10,18 @@ import org.msgpack.unpacker.Unpacker;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class MessageTemplate extends AbstractTemplate<Message> {
+public final class WorkerMessageTemplate extends AbstractTemplate<WorkerMessage> {
 
-    private static final Template<Message> instance = new MessageTemplate();
+    private static final Template<WorkerMessage> instance = new WorkerMessageTemplate();
 
-    private MessageTemplate() { }
+    private WorkerMessageTemplate() { }
 
-    public static Template<Message> getInstance() {
+    public static Template<WorkerMessage> getInstance() {
         return instance;
     }
 
     @Override
-    public void write(Packer packer, Message message, boolean required) throws IOException {
+    public void write(Packer packer, WorkerMessage message, boolean required) throws IOException {
         packer.writeArrayBegin(3);
         packer.write(message.getSession());
         packer.write(message.getType().value());
@@ -76,7 +76,7 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
     }
 
     @Override
-    public Message read(Unpacker unpacker, Message message, boolean required) throws IOException {
+    public WorkerMessage read(Unpacker unpacker, WorkerMessage message, boolean required) throws IOException {
         throw new UnsupportedOperationException();
     }
 

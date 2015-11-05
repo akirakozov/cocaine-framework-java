@@ -7,7 +7,7 @@ import com.google.common.base.Preconditions;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class HandshakeMessage extends Message {
+public final class HandshakeMessage extends WorkerMessage {
 
     private final UUID id;
 

@@ -1,20 +1,20 @@
 package cocaine;
 
-import cocaine.message.Message;
+import cocaine.message.WorkerMessage;
 
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
 public class UnexpectedClientMessageException extends ClientException {
 
-    private final Message msg;
+    private final WorkerMessage msg;
 
-    public UnexpectedClientMessageException(String application, Message msg) {
+    public UnexpectedClientMessageException(String application, WorkerMessage msg) {
         super(application, "Unexpected message: " + msg.toString());
         this.msg = msg;
     }
 
-    public Message getMsg() {
+    public WorkerMessage getMsg() {
         return msg;
     }
 }

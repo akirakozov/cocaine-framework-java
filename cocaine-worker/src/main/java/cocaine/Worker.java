@@ -6,7 +6,7 @@ import java.util.*;
 
 import cocaine.message.*;
 import cocaine.messagev12.MessageV12;
-import cocaine.message.MessageTemplate;
+import cocaine.message.WorkerMessageTemplate;
 import cocaine.msgpack.MessageV12Template;
 import com.etsy.net.JUDS;
 import com.etsy.net.UnixDomainSocket;
@@ -23,7 +23,7 @@ public class Worker implements AutoCloseable {
 
     private static final Logger logger = Logger.getLogger(Worker.class);
 
-    private static final Message HEARTBEAT = Messages.heartbeat();
+    private static final WorkerMessage HEARTBEAT = Messages.heartbeat();
 
     private final MessagePack pack;
     private final WorkerOptions options;
@@ -40,7 +40,7 @@ public class Worker implements AutoCloseable {
     Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
         this.pack = new MessagePack();
         this.pack.register(MessageV12.class, MessageV12Template.getInstance());
-        this.pack.register(Message.class, MessageTemplate.getInstance());
+        this.pack.register(WorkerMessage.class, WorkerMessageTemplate.getInstance());
         this.options = options;
         this.handlers = handlers;
         this.sessions = new WorkerSessions(this);
@@ -82,13 +82,13 @@ public class Worker implements AutoCloseable {
     }
 
     private void dispatch(MessageV12 message) {
-        Optional<Message> workerMessage = toWorkerMessage(message);
+        Optional<WorkerMessage> workerMessage = toWorkerMessage(message);
 
         if (!workerMessage.isPresent()) {
             logger.warn("Unexpected message type " + message.getType() + " on session" + message.getSession());
             return;
         }
-        Message msg = workerMessage.get();
+        WorkerMessage msg = workerMessage.get();
         logger.info(msg);
 
         switch (msg.getType()) {
@@ -115,7 +115,7 @@ public class Worker implements AutoCloseable {
         }
     }
 
-    private Optional<Message> toWorkerMessage(MessageV12 msg) {
+    private Optional<WorkerMessage> toWorkerMessage(MessageV12 msg) {
         if (msg.getSession() == 1) {
             if (msg.getType() == MessageType.HEARTBEAT.value()) {
                 return Optional.of(Messages.heartbeat());
@@ -223,7 +223,7 @@ public class Worker implements AutoCloseable {
         this.write(Messages.error(session, code, message));
     }
 
-    private void write(Message message) {
+    private void write(WorkerMessage message) {
         if (socket == null) {
             logger.error("No socket connection was established");
             return;

@@ -3,7 +3,7 @@ package cocaine.message;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class CloseMessage extends Message {
+public final class CloseMessage extends WorkerMessage {
 
     public CloseMessage(long session) {
         super(MessageType.CLOSE, session);

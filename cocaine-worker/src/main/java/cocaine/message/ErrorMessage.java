@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class ErrorMessage extends Message {
+public final class ErrorMessage extends WorkerMessage {
 
     public static final class Code {
 

@@ -13,7 +13,7 @@ import org.msgpack.MessagePack;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public class MessageTemplateTest {
+public class WorkerMessageTemplateTest {
 
     private MessagePack pack;
 
@@ -26,20 +26,20 @@ public class MessageTemplateTest {
     @Test
     public void writeHandshakeMessage() throws IOException {
         UUID uuid = UUID.randomUUID();
-        Message msg = Messages.handshake(uuid);
+        WorkerMessage msg = Messages.handshake(uuid);
         byte[] bytes = pack.write(Arrays.asList(1, 0, Arrays.asList(uuid)));
 
-        byte[] result = pack.write(msg, MessageTemplate.getInstance());
+        byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
         Assert.assertArrayEquals(bytes, result);
     }
 
     @Test
     public void writeHeartbeatMessage() throws IOException {
-        Message msg = Messages.heartbeat();
+        WorkerMessage msg = Messages.heartbeat();
         byte[] bytes = pack.write(Arrays.asList(1, 0, Arrays.asList()));
 
-        byte[] result = pack.write(msg, MessageTemplate.getInstance());
+        byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
         Assert.assertArrayEquals(bytes, result);
     }
@@ -47,10 +47,10 @@ public class MessageTemplateTest {
     @Test
     public void writeTerminateMessage() throws IOException {
         String message = "PANIC!";
-        Message msg = Messages.terminate(TerminateMessage.Reason.NORMAL, message);
+        WorkerMessage msg = Messages.terminate(TerminateMessage.Reason.NORMAL, message);
         byte[] bytes = pack.write(Arrays.asList(1, 1, Arrays.asList(1, message)));
 
-        byte[] result = pack.write(msg, MessageTemplate.getInstance());
+        byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
         Assert.assertArrayEquals(bytes, result);
     }
@@ -59,10 +59,10 @@ public class MessageTemplateTest {
     public void writeInvokeMessage() throws IOException {
         long session = 1L;
         String method = "invoke";
-        Message msg = Messages.invoke(session, method);
+        WorkerMessage msg = Messages.invoke(session, method);
         byte[] bytes = pack.write(Arrays.asList(session, 0, Arrays.asList(method)));
 
-        byte[] result = pack.write(msg, MessageTemplate.getInstance());
+        byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
         Assert.assertArrayEquals(bytes, result);
     }
@@ -71,10 +71,10 @@ public class MessageTemplateTest {
     public void writeWriteMessage() throws IOException {
         long session = 1L;
         byte[] data = new byte[] { 1, 2, 3, 4, 5 };
-        Message msg = Messages.write(session, data);
+        WorkerMessage msg = Messages.write(session, data);
         byte[] bytes = pack.write(Arrays.asList(session, 0, Collections.singletonList(data)));
 
-        byte[] result = pack.write(msg, MessageTemplate.getInstance());
+        byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
         Assert.assertArrayEquals(bytes, result);
     }
@@ -84,10 +84,10 @@ public class MessageTemplateTest {
         long session = 1L;
         int code = -200;
         String message = "Failed!";
-        Message msg = Messages.error(session, code, message);
+        WorkerMessage msg = Messages.error(session, code, message);
         byte[] bytes = pack.write(Arrays.asList(session, 1, Arrays.asList(code, message)));
 
-        byte[] result = pack.write(msg, MessageTemplate.getInstance());
+        byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
         Assert.assertArrayEquals(bytes, result);
     }
@@ -95,10 +95,10 @@ public class MessageTemplateTest {
     @Test
     public void writeCloseMessage() throws IOException {
         long session = 1L;
-        Message msg = Messages.close(session);
+        WorkerMessage msg = Messages.close(session);
         byte[] bytes = pack.write(Arrays.asList(session, 2, Arrays.asList()));
 
-        byte[] result = pack.write(msg, MessageTemplate.getInstance());
+        byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
         Assert.assertArrayEquals(bytes, result);
     }

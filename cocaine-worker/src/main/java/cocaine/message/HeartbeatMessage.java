@@ -3,7 +3,7 @@ package cocaine.message;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class HeartbeatMessage extends Message {
+public final class HeartbeatMessage extends WorkerMessage {
 
     public HeartbeatMessage() {
         super(MessageType.HEARTBEAT);

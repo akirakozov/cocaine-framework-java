@@ -10,7 +10,7 @@ import com.google.common.collect.Maps;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public final class TerminateMessage extends Message {
+public final class TerminateMessage extends WorkerMessage {
 
     public static enum Reason {
 
@@ -55,7 +55,7 @@ public final class TerminateMessage extends Message {
     public TerminateMessage(Reason reason, String message) {
         super(MessageType.TERMINATE);
         this.reason = Preconditions.checkNotNull(reason, "Termination reason can not be null");
-        this.message = Preconditions.checkNotNull(message, "Message can not be null");
+        this.message = Preconditions.checkNotNull(message, "WorkerMessage can not be null");
     }
 
     public Reason getReason() {
