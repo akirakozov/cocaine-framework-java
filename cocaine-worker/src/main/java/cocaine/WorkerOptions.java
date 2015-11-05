@@ -33,6 +33,9 @@ public class WorkerOptions {
     @Parameter(names = "--locator", required = true)
     private String locator;
 
+    @Parameter(names = "--protocol", required = true)
+    private String protocol;
+
     public int getDisownTimeout() {
         return disownTimeout;
     }
@@ -61,10 +64,18 @@ public class WorkerOptions {
         return locator;
     }
 
+    public String getProtocol() {
+        return protocol;
+    }
+
     @Override
     public String toString() {
-        return "WorkerOptions{endpoint: " + endpoint + ", disownTimeout: " + disownTimeout
-                + ", heartbeatTimeout: " + heartbeatTimeout + ", application: " + application + ", uuid: " + uuid + "}";
+        return "WorkerOptions{endpoint: " + endpoint
+                + ", disownTimeout: " + disownTimeout
+                + ", heartbeatTimeout: " + heartbeatTimeout
+                + ", application: " + application
+                + ", uuid: " + uuid
+                + ", protocol: " + protocol + "}";
     }
 
     public static final class UUIDConverter implements IStringConverter<UUID> {
