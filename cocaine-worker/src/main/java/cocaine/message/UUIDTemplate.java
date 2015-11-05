@@ -1,4 +1,4 @@
-package cocaine.msgpack;
+package cocaine.message;
 
 import java.io.IOException;
 import java.util.UUID;

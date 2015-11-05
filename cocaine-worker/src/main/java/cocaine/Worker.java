@@ -6,7 +6,7 @@ import java.util.*;
 
 import cocaine.message.*;
 import cocaine.messagev12.MessageV12;
-import cocaine.msgpack.MessageTemplate;
+import cocaine.message.MessageTemplate;
 import cocaine.msgpack.MessageV12Template;
 import com.etsy.net.JUDS;
 import com.etsy.net.UnixDomainSocket;

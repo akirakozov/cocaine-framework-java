@@ -1,7 +1,5 @@
 package cocaine;
 
-import cocaine.message.Message;
-
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  * @author akirakozov

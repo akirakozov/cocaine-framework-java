@@ -11,11 +11,8 @@ import java.util.concurrent.TimeUnit;
 import cocaine.ServiceInfo;
 import cocaine.api.ServiceApi;
 import cocaine.api.TransactionTree;
-import cocaine.message.Message;
-import cocaine.msgpack.MessageTemplate;
 import cocaine.msgpack.ServiceInfoTemplate;
 import cocaine.netty.MessageDecoder;
-import cocaine.netty.MessageEncoder;
 import cocaine.netty.MessagePackableEncoder;
 import cocaine.service.Service;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
@@ -51,7 +48,6 @@ public final class Locator implements AutoCloseable {
         this.endpoint = endpoint;
         this.eventLoop = new NioEventLoopGroup(1);
         this.pack = new MessagePack();
-        this.pack.register(Message.class, MessageTemplate.getInstance());
         this.bootstrap = new Bootstrap()
                 .group(eventLoop)
 
@@ -65,7 +61,6 @@ public final class Locator implements AutoCloseable {
                     public void initChannel(Channel channel) {
                         channel.pipeline()
                                 .addLast("Message Decoder", new MessageDecoder(pack))
-                                .addLast("Message Encoder", new MessageEncoder(pack))
                                 .addLast("Message Packable Encoder", new MessagePackableEncoder(pack));
                     }
                 });

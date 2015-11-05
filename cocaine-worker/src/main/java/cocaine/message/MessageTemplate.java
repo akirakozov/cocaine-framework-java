@@ -1,10 +1,7 @@
-package cocaine.msgpack;
+package cocaine.message;
 
 import java.io.IOException;
-import java.util.UUID;
 
-import cocaine.message.*;
-import cocaine.message.WriteMessage;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;

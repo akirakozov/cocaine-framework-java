@@ -20,7 +20,6 @@ public class MessageV12TemplateTest {
     @Before
     public void setUp() {
         this.pack = new MessagePack();
-        this.pack.register(UUID.class, UUIDTemplate.getInstance());
     }
 
     @Test

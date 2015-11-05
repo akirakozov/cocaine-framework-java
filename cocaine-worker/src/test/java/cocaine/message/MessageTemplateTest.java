@@ -1,13 +1,10 @@
-package cocaine.msgpack;
+package cocaine.message;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
-import cocaine.message.Message;
-import cocaine.message.Messages;
-import cocaine.message.TerminateMessage;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
