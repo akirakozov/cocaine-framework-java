@@ -1,6 +1,6 @@
 package cocaine.netty;
 
-import cocaine.messagev12.MessageV12;
+import cocaine.message.Message;
 import cocaine.session.Sessions;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -24,7 +24,7 @@ public class ServiceMessageHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.info("Handling message for service " + serviceName + ": " + msg);
 
-        MessageV12 message = (MessageV12) msg;
+        Message message = (Message) msg;
         sessions.onEvent(message);
     }
 

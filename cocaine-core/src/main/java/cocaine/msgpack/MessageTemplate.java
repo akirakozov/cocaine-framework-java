@@ -1,6 +1,6 @@
 package cocaine.msgpack;
 
-import cocaine.messagev12.MessageV12;
+import cocaine.message.Message;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
@@ -12,18 +12,18 @@ import java.io.IOException;
 /**
  * @author akirakozov
  */
-public final class MessageV12Template<T> extends AbstractTemplate<MessageV12> {
+public final class MessageTemplate<T> extends AbstractTemplate<Message> {
 
-    private static final Template<MessageV12> instance = new MessageV12Template();
-    private MessageV12Template() {
+    private static final Template<Message> instance = new MessageTemplate();
+    private MessageTemplate() {
     }
 
-    public static Template<MessageV12> getInstance() {
+    public static Template<Message> getInstance() {
         return instance;
     }
 
     @Override
-    public void write(Packer packer, MessageV12 message, boolean required) throws IOException {
+    public void write(Packer packer, Message message, boolean required) throws IOException {
         packer.writeArrayBegin(3);
         packer.write(message.getSession());
         packer.write(message.getType());
@@ -32,14 +32,14 @@ public final class MessageV12Template<T> extends AbstractTemplate<MessageV12> {
     }
 
     @Override
-    public MessageV12 read(Unpacker unpacker, MessageV12 message, boolean required) throws IOException {
+    public Message read(Unpacker unpacker, Message message, boolean required) throws IOException {
         unpacker.readArrayBegin();
         long session = unpacker.readLong();
         int messageType = unpacker.readInt();
         Value payload = unpacker.readValue();
         unpacker.readArrayEnd();
 
-        return new MessageV12(messageType, session, payload);
+        return new Message(messageType, session, payload);
     }
 
 }

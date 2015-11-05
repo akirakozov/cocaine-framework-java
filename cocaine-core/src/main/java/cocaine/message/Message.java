@@ -1,4 +1,4 @@
-package cocaine.messagev12;
+package cocaine.message;
 
 import org.msgpack.type.Value;
 
@@ -7,12 +7,12 @@ import java.util.Objects;
 /**
  * @author akirakozov
  */
-public class MessageV12 {
+public class Message {
     private final int type;
     private final long session;
     private final Value payload;
 
-    public MessageV12(int type, long session, Value payload) {
+    public Message(int type, long session, Value payload) {
         this.type = type;
         this.session = session;
         this.payload = payload;
@@ -39,7 +39,7 @@ public class MessageV12 {
             return false;
         }
 
-        MessageV12 m = (MessageV12) o;
+        Message m = (Message) o;
         return session == m.session && type == m.type && Objects.equals(payload, m.getPayload());
     }
 

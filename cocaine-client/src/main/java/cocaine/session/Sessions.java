@@ -1,7 +1,7 @@
 package cocaine.session;
 
 import cocaine.api.TransactionTree;
-import cocaine.messagev12.MessageV12;
+import cocaine.message.Message;
 import cocaine.session.protocol.CocaineProtocol;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
 import io.netty.channel.Channel;
@@ -47,7 +47,7 @@ public class Sessions {
         return create(rx, tx, channel, new ValueIdentityPayloadDeserializer());
     }
 
-    public void onEvent(MessageV12 msg) {
+    public void onEvent(Message msg) {
         Session session = sessions.get(msg.getSession());
         if (session != null) {
             session.rx().onRead(msg.getType(), msg.getPayload());

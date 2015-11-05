@@ -5,9 +5,9 @@ import java.io.InputStream;
 import java.util.*;
 
 import cocaine.message.*;
-import cocaine.messagev12.MessageV12;
+import cocaine.message.Message;
 import cocaine.message.WorkerMessageTemplate;
-import cocaine.msgpack.MessageV12Template;
+import cocaine.msgpack.MessageTemplate;
 import com.etsy.net.JUDS;
 import com.etsy.net.UnixDomainSocket;
 import com.etsy.net.UnixDomainSocketClient;
@@ -39,7 +39,7 @@ public class Worker implements AutoCloseable {
 
     Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
         this.pack = new MessagePack();
-        this.pack.register(MessageV12.class, MessageV12Template.getInstance());
+        this.pack.register(Message.class, MessageTemplate.getInstance());
         this.pack.register(WorkerMessage.class, WorkerMessageTemplate.getInstance());
         this.options = options;
         this.handlers = handlers;
@@ -81,7 +81,7 @@ public class Worker implements AutoCloseable {
         stop();
     }
 
-    private void dispatch(MessageV12 message) {
+    private void dispatch(Message message) {
         Optional<WorkerMessage> workerMessage = toWorkerMessage(message);
 
         if (!workerMessage.isPresent()) {
@@ -115,7 +115,7 @@ public class Worker implements AutoCloseable {
         }
     }
 
-    private Optional<WorkerMessage> toWorkerMessage(MessageV12 msg) {
+    private Optional<WorkerMessage> toWorkerMessage(Message msg) {
         if (msg.getSession() == 1) {
             if (msg.getType() == MessageType.HEARTBEAT.value()) {
                 return Optional.of(Messages.heartbeat());
@@ -274,7 +274,7 @@ public class Worker implements AutoCloseable {
             try {
                 Unpacker unpacker = pack.createUnpacker(getSocketInputStream());
                 while (true) {
-                    Worker.this.dispatch(unpacker.read(MessageV12.class));
+                    Worker.this.dispatch(unpacker.read(Message.class));
                 }
             } catch (Exception e) {
                 if (!isInterrupted()) {
