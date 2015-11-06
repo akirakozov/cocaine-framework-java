@@ -75,6 +75,7 @@ public class WorkerOptions {
                 + ", heartbeatTimeout: " + heartbeatTimeout
                 + ", application: " + application
                 + ", uuid: " + uuid
+                + ", locator: " + locator
                 + ", protocol: " + protocol + "}";
     }
 

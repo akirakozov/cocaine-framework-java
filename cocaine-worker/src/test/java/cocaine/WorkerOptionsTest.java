@@ -18,7 +18,7 @@ public class WorkerOptionsTest {
                 "--app", "example",
                 "--endpoint", "/tmp/cocaine.sock",
                 "--uuid", "26e82218-161f-11e4-be84-1867b0bd9c14",
-                "--locator", "locator",
+                "--locator", "127.0.0.1:10053",
                 "--protocol", "1",
                 "-d", "120000",
                 "-h", "12000");
@@ -28,7 +28,7 @@ public class WorkerOptionsTest {
         Assert.assertEquals(UUID.fromString("26e82218-161f-11e4-be84-1867b0bd9c14"), options.getUuid());
         Assert.assertEquals(120000, options.getDisownTimeout());
         Assert.assertEquals(12000, options.getHeartbeatTimeout());
-        Assert.assertEquals("locator", options.getLocator());
+        Assert.assertEquals("127.0.0.1:10053", options.getLocator());
         Assert.assertEquals("1", options.getProtocol());
     }
 
