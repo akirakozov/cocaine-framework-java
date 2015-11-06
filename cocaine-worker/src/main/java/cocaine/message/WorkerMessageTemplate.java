@@ -59,7 +59,10 @@ public final class WorkerMessageTemplate extends AbstractTemplate<WorkerMessage>
             case ERROR: {
                 ErrorMessage errorMessage = (ErrorMessage) message;
                 packer.writeArrayBegin(2);
+                packer.writeArrayBegin(2);
+                packer.write(errorMessage.getCategory());
                 packer.write(errorMessage.getCode());
+                packer.writeArrayEnd();
                 packer.write(errorMessage.getMessage());
                 packer.writeArrayEnd();
                 break;

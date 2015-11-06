@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
+ * @author akirakozov
  */
 public final class ErrorMessage extends WorkerMessage {
 
@@ -19,17 +20,29 @@ public final class ErrorMessage extends WorkerMessage {
         private Code() { }
     }
 
+    public static final class Category {
+        public static final int FRAMEWORK = 42;
+
+        private Category() {}
+    }
+
     private final int code;
+    private final int category;
     private final String message;
 
-    public ErrorMessage(long session, int code, String message) {
+    public ErrorMessage(long session, int category, int code, String message) {
         super(MessageType.ERROR, session);
         this.code = code;
+        this.category = category;
         this.message = Preconditions.checkNotNull(message, "Error message can not be null");
     }
 
     public int getCode() {
         return code;
+    }
+
+    public int getCategory() {
+        return category;
     }
 
     public String getMessage() {
@@ -38,7 +51,7 @@ public final class ErrorMessage extends WorkerMessage {
 
     @Override
     public String toString() {
-        return "ErrorMessage/" + getSession() + ": " + code + " - " + message;
+        return "ErrorMessage/" + getSession() + ": " + category + ", " + code + " - " + message;
     }
 
     @Override
@@ -54,12 +67,13 @@ public final class ErrorMessage extends WorkerMessage {
         }
 
         ErrorMessage that = (ErrorMessage) o;
-        return code == that.code && message.equals(that.message);
+        return code == that.code && category == that.category && message.equals(that.message);
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
+        result = 31 * result + category;
         result = 31 * result + code;
         result = 31 * result + message.hashCode();
         return result;

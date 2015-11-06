@@ -124,7 +124,7 @@ final class WorkerSessions {
 
         @Override
         public void onError(Throwable error) {
-            this.worker.sendError(session, ErrorMessage.Code.EINVFAILED, error.getMessage());
+            this.worker.sendError(session, ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.EINVFAILED, error.getMessage());
         }
 
         @Override

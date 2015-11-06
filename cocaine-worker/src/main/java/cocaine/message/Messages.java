@@ -31,8 +31,8 @@ public final class Messages {
         return new CloseMessage(session);
     }
 
-    public static WorkerMessage error(long session, int code, String message) {
-        return new ErrorMessage(session, code, message);
+    public static WorkerMessage error(long session, int category, int code, String message) {
+        return new ErrorMessage(session, category, code, message);
     }
 
     private Messages() { }

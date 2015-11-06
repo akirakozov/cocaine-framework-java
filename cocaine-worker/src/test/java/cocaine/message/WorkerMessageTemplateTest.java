@@ -82,10 +82,11 @@ public class WorkerMessageTemplateTest {
     @Test
     public void writeErrorMessage() throws IOException {
         long session = 1L;
+        int category = 1;
         int code = -200;
         String message = "Failed!";
-        WorkerMessage msg = Messages.error(session, code, message);
-        byte[] bytes = pack.write(Arrays.asList(session, 1, Arrays.asList(code, message)));
+        WorkerMessage msg = Messages.error(session, category, code, message);
+        byte[] bytes = pack.write(Arrays.asList(session, 1, Arrays.asList(Arrays.asList(category, code), message)));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 

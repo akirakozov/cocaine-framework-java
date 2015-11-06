@@ -14,10 +14,12 @@ import com.etsy.net.UnixDomainSocketClient;
 import com.google.common.base.Throwables;
 import org.apache.log4j.Logger;
 import org.msgpack.MessagePack;
+import org.msgpack.type.ArrayValue;
 import org.msgpack.unpacker.Unpacker;
 
 /**
  * @author Anton Bobukh <anton@bobukh.ru>
+ * @author akirakozov
  */
 public class Worker implements AutoCloseable {
 
@@ -51,6 +53,7 @@ public class Worker implements AutoCloseable {
     }
 
     public void run() throws IOException {
+        logger.info("Start worker with options: " + options);
         this.socket = new UnixDomainSocketClient(options.getEndpoint(), JUDS.SOCK_STREAM);
         this.sendHandShake();
         this.heartbeats.scheduleAtFixedRate(new Heartbeat(), 0, options.getHeartbeatTimeout());
@@ -141,8 +144,12 @@ public class Worker implements AutoCloseable {
         } else if (msg.getType() == MessageType.CLOSE.value()) {
             return Optional.of(Messages.close(msg.getSession()));
         } else if (msg.getType() == MessageType.ERROR.value()) {
-            // TODO: read error code and message from payload
-            return Optional.of(Messages.error(msg.getSession(), 0, ""));
+            ArrayValue values = msg.getPayload().asArrayValue();
+            ArrayValue errCodes = values.get(0).asArrayValue();
+            int category = errCodes.get(0).asIntegerValue().getInt();
+            int error = errCodes.get(1).asIntegerValue().getInt();
+            String errMsg = values.size() == 2 ? values.get(1).asRawValue().getString() : "";
+            return Optional.of(Messages.error(msg.getSession(), category, error, errMsg));
         }
 
         return Optional.empty();
@@ -170,12 +177,12 @@ public class Worker implements AutoCloseable {
                 this.handlers.get(event).handle(session.getInput(), session.getOutput());
             } else {
                 logger.warn("No handler for '" + event + "' event is registered");
-                write(Messages.error(msg.getSession(), ErrorMessage.Code.ENOHANDLER,
+                write(Messages.error(msg.getSession(), ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.ENOHANDLER,
                         "No handler for '" + event + "' event is registered"));
             }
         } catch (Exception e) {
             logger.error("Invocation failed: " + e.getMessage());
-            write(Messages.error(msg.getSession(), ErrorMessage.Code.EINVFAILED,
+            write(Messages.error(msg.getSession(), ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.EINVFAILED,
                     "Invocation failed: " + e.getMessage()));
         }
     }
@@ -219,8 +226,8 @@ public class Worker implements AutoCloseable {
         this.write(Messages.write(session, data));
     }
 
-    void sendError(long session, int code, String message) {
-        this.write(Messages.error(session, code, message));
+    void sendError(long session, int category, int code, String message) {
+        this.write(Messages.error(session, category, code, message));
     }
 
     private void write(WorkerMessage message) {
