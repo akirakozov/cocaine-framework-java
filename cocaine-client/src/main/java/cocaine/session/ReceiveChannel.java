@@ -12,7 +12,6 @@ import rx.subjects.Subject;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -23,7 +22,6 @@ public class ReceiveChannel<T> {
 
     private TransactionTree rxTree;
     private final Subject<ResultMessage, ResultMessage> subject;
-    private final AtomicBoolean isDone;
     private final AtomicInteger curMessageNum;
     private final CocaineProtocol protocol;
     private final CocainePayloadDeserializer<T> deserializer;
@@ -38,15 +36,12 @@ public class ReceiveChannel<T> {
         this.serviceName = serviceName;
         this.rxTree = rxTree;
         this.subject = ReplaySubject.create();
-        this.isDone = new AtomicBoolean(false);
         this.curMessageNum = new AtomicInteger(0);
         this.protocol = protocol;
         this.deserializer = deserializer;
     }
 
     public T get() {
-        checkIsDone();
-
         ResultMessage msg = subject.skip(curMessageNum.getAndIncrement()).toBlocking().first();
         Value payload = protocol.handle(serviceName, msg.messageType, msg.payload);
         try {
@@ -61,7 +56,6 @@ public class ReceiveChannel<T> {
     void onRead(int type, Value payload) {
         Optional<TransactionInfo> info = rxTree.getInfo(type);
         if (!info.isPresent()) {
-            isDone.set(true);
             subject.onError(new UnexpectedServiceMessageException(serviceName, type));
             logger.error("Unknown message type: " + type + ", for service " + serviceName);
         } else {
@@ -79,18 +73,7 @@ public class ReceiveChannel<T> {
     }
 
     public void onCompleted() {
-        done();
         subject.onCompleted();
-    }
-
-    public void done() {
-        isDone.set(true);
-    }
-
-    private void checkIsDone() {
-        if (isDone.get()) {
-            throw new ServiceException(serviceName, "Session is completed.");
-        }
     }
 
     private static class ResultMessage {
