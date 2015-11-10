@@ -45,7 +45,11 @@ public class ReceiveChannel<T> {
         ResultMessage msg = subject.skip(curMessageNum.getAndIncrement()).toBlocking().first();
         Value payload = protocol.handle(serviceName, msg.messageType, msg.payload);
         try {
-            return deserializer.deserialize(msg.messageType, payload);
+            if (payload != null) {
+                return deserializer.deserialize(msg.messageType, payload);
+            } else {
+                return null;
+            }
         } catch (IOException e) {
             logger.error(
                     "Couldn't deserialize result of message " + msg.messageType + ", " + e.getMessage(), e);
