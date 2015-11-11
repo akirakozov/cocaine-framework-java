@@ -1,13 +1,13 @@
 package cocaine.http;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
-import org.msgpack.template.Templates;
 import org.msgpack.unpacker.Unpacker;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * @author akirakozov
@@ -33,7 +33,18 @@ public final class HttpInitialRequestTemplate extends AbstractTemplate<HttpIniti
         String method = unpacker.readString();
         String path = unpacker.readString();
         String version = unpacker.readString();
-        Map<String, String> headers = unpacker.read(Templates.tMap(Templates.TString, Templates.TString));
+        // headers
+        int headersCount = unpacker.readArrayBegin();
+        Multimap<String, String> headers = ArrayListMultimap.create();
+        for (int i = 0; i < headersCount; i++) {
+            unpacker.readArrayBegin();
+            String header = unpacker.readString();
+            String value = unpacker.readString();
+            headers.put(header, value);
+            unpacker.readArrayEnd();
+        }
+        unpacker.readArrayEnd();
+        // body first part
         byte[] data = unpacker.readByteArray();
         unpacker.readArrayEnd();
 

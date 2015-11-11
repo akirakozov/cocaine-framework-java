@@ -281,9 +281,15 @@ public class Worker implements AutoCloseable {
             try {
                 Unpacker unpacker = pack.createUnpacker(getSocketInputStream());
                 while (true) {
-                    Worker.this.dispatch(unpacker.read(Message.class));
+                    try {
+                        Worker.this.dispatch(unpacker.read(Message.class));
+                    } catch (Exception e) {
+                        logger.warn(e, e);
+                        Thread.sleep(1000);
+                    }
                 }
             } catch (Exception e) {
+                logger.warn(e, e);
                 if (!isInterrupted()) {
                     throw Throwables.propagate(e);
                 }

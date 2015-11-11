@@ -1,5 +1,7 @@
 package cocaine.http;
 
+import com.google.common.collect.Multimap;
+
 import java.util.Map;
 
 /**
@@ -10,12 +12,12 @@ public class HttpInitialRequest {
     private final String method;
     private final String path;
     private final String httpVersion;
-    private final Map<String, String> headers;
+    private final Multimap<String, String> headers;
     private final byte[] body;
 
     public HttpInitialRequest(
             String method, String path, String httpVersion,
-            Map<String, String> headers, byte[] body)
+            Multimap<String, String> headers, byte[] body)
     {
         this.method = method;
         this.path = path;
@@ -40,7 +42,7 @@ public class HttpInitialRequest {
         return body;
     }
 
-    public Map<String, String> getHeaders() {
+    public Multimap<String, String> getHeaders() {
         // TODO: return read-only copy
         return headers;
     }
