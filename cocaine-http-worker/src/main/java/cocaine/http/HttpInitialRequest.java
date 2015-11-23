@@ -2,7 +2,9 @@ package cocaine.http;
 
 import com.google.common.collect.Multimap;
 
-import java.util.Map;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author akirakozov
@@ -45,5 +47,17 @@ public class HttpInitialRequest {
     public Multimap<String, String> getHeaders() {
         // TODO: return read-only copy
         return headers;
+    }
+
+    public Optional<String> getHeader(String name) {
+        return headers.get(name).stream().findFirst();
+    }
+
+    public Collection<String> getHeaders(String name) {
+        return headers.get(name);
+    }
+
+    public Set<String> getHeaderNames() {
+        return headers.keySet();
     }
 }
