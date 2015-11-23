@@ -51,6 +51,7 @@
         <module>cocaine-services</module>
         <module>cocaine-worker-archetype</module>
         <module>cocaine-client-archetype</module>
+        <module>cocaine-http-worker</module>
     </modules>
 
     <prerequisites>
