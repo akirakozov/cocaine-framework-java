@@ -1,5 +1,12 @@
 package cocaine.http;
 
+import cocaine.http.io.HttpCocaineInputStream;
+import cocaine.io.CocaineChannelInputStream;
+import com.google.common.base.Throwables;
+import org.apache.log4j.Logger;
+import org.msgpack.MessagePack;
+import rx.Observable;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.Cookie;
@@ -9,19 +16,34 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author akirakozov
  */
 public class HttpCocaineRequest implements HttpServletRequest {
-    private final HttpInitialRequest request;
+    private static final Logger logger = Logger.getLogger(HttpCocaineRequest.class);
+    private static final MessagePack PACK = new MessagePack();
 
-    public HttpCocaineRequest(HttpInitialRequest request) {
-        this.request = request;
+    private final HttpInitialRequest request;
+    private final HttpCocaineInputStream inputStream;
+
+    public HttpCocaineRequest(Observable<byte[]> request) {
+        Iterator<byte[]> it = request.toBlocking().getIterator();
+        byte[] initialHttpChunk = it.next();
+
+        this.request = readInitialHttpChunk(initialHttpChunk);
+        this.inputStream = new HttpCocaineInputStream(
+                new CocaineChannelInputStream(this.request.getFirstBodyPart(), it));
+    }
+
+    private HttpInitialRequest readInitialHttpChunk(byte[] initialHttpChunk) {
+        try {
+            return PACK.read(initialHttpChunk, HttpInitialRequestTemplate.getInstance());
+        } catch (IOException e) {
+            logger.warn("Couldn't parse initial http chunk", e);
+            throw Throwables.propagate(e);
+        }
     }
 
     @Override
@@ -186,7 +208,7 @@ public class HttpCocaineRequest implements HttpServletRequest {
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        return null;
+        return inputStream;
     }
 
     @Override
