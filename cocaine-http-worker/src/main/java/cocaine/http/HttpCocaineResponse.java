@@ -1,5 +1,8 @@
 package cocaine.http;
 
+import cocaine.http.io.HttpCocaineOutputStream;
+import rx.Observer;
+
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -13,6 +16,11 @@ import java.util.Locale;
 public class HttpCocaineResponse implements HttpServletResponse {
     // TODO: constants
     private int status = 200;
+    private final HttpCocaineOutputStream outputStream;
+
+    public HttpCocaineResponse(Observer<byte[]> output) {
+        this.outputStream = new HttpCocaineOutputStream(output, this);
+    }
 
     @Override
     public void addCookie(Cookie cookie) {
@@ -115,12 +123,12 @@ public class HttpCocaineResponse implements HttpServletResponse {
 
     @Override
     public ServletOutputStream getOutputStream() throws IOException {
-        return null;
+        return outputStream;
     }
 
     @Override
     public PrintWriter getWriter() throws IOException {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -176,5 +184,9 @@ public class HttpCocaineResponse implements HttpServletResponse {
     @Override
     public Locale getLocale() {
         return null;
+    }
+
+    public void closeOutput() throws IOException {
+        outputStream.close();
     }
 }
