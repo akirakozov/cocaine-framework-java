@@ -27,12 +27,14 @@ public class HttpCocaineRequest implements HttpServletRequest {
 
     private final HttpInitialRequest request;
     private final HttpCocaineInputStream inputStream;
+    private final HttpMetaData metaData;
 
     public HttpCocaineRequest(Observable<byte[]> request) {
         Iterator<byte[]> it = request.toBlocking().getIterator();
         byte[] initialHttpChunk = it.next();
 
         this.request = readInitialHttpChunk(initialHttpChunk);
+        this.metaData = new HttpMetaData(this.request.getPath());
         this.inputStream = new HttpCocaineInputStream(
                 new CocaineChannelInputStream(this.request.getFirstBodyPart(), it));
     }
@@ -213,22 +215,27 @@ public class HttpCocaineRequest implements HttpServletRequest {
 
     @Override
     public String getParameter(String name) {
-        return null;
+        String[] values = getParameterValues(name);
+        if (values != null && values.length > 0) {
+            return values[0];
+        } else {
+            return null;
+        }
     }
 
     @Override
     public Enumeration getParameterNames() {
-        return null;
+        return Collections.enumeration(metaData.getParameters().keySet());
     }
 
     @Override
     public String[] getParameterValues(String name) {
-        return new String[0];
+        return metaData.getParameters().get(name);
     }
 
     @Override
     public Map getParameterMap() {
-        return null;
+        return metaData.getParameters();
     }
 
     @Override
