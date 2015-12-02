@@ -95,7 +95,7 @@ public class HttpCocaineRequest implements HttpServletRequest {
 
     @Override
     public String getPathInfo() {
-        return request.getPath();
+        return metaData.getPath();
     }
 
     @Override
@@ -110,7 +110,7 @@ public class HttpCocaineRequest implements HttpServletRequest {
 
     @Override
     public String getQueryString() {
-        return null;
+        return metaData.getQueryString();
     }
 
     @Override
