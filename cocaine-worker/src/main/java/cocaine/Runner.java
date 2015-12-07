@@ -48,12 +48,7 @@ public final class Runner {
 
     private static String printHandlers(Map<String, EventHandler> handlers) {
         return Joiner.on("\n  ").withKeyValueSeparator(": ")
-                .join(Maps.transformValues(handlers, new Function<EventHandler, String>() {
-                    @Override
-                    public String apply(EventHandler handler) {
-                        return handler.getClass().getName();
-                    }
-                }));
+                .join(Maps.transformValues(handlers, h -> h.getClass().getName()));
     }
 
     private static final class MethodEventHandler implements EventHandler {
