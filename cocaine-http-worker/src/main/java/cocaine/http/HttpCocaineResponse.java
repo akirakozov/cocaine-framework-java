@@ -1,6 +1,8 @@
 package cocaine.http;
 
 import cocaine.http.io.HttpCocaineOutputStream;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import rx.Observer;
 
 import javax.servlet.ServletOutputStream;
@@ -8,6 +10,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -16,10 +19,12 @@ import java.util.Locale;
 public class HttpCocaineResponse implements HttpServletResponse {
     // TODO: constants
     private int status = 200;
+    private final Multimap<String, String> headers;
     private final HttpCocaineOutputStream outputStream;
 
     public HttpCocaineResponse(Observer<byte[]> output) {
         this.outputStream = new HttpCocaineOutputStream(output, this);
+        this.headers = ArrayListMultimap.create();
     }
 
     @Override
@@ -29,7 +34,7 @@ public class HttpCocaineResponse implements HttpServletResponse {
 
     @Override
     public boolean containsHeader(String name) {
-        return false;
+        return headers.containsKey(name);
     }
 
     @Override
@@ -79,22 +84,22 @@ public class HttpCocaineResponse implements HttpServletResponse {
 
     @Override
     public void setHeader(String name, String value) {
-
+        headers.replaceValues(name, Arrays.asList(value));
     }
 
     @Override
     public void addHeader(String name, String value) {
-
+        headers.put(name, value);
     }
 
     @Override
     public void setIntHeader(String name, int value) {
-
+        setHeader(name, String.valueOf(value));
     }
 
     @Override
     public void addIntHeader(String name, int value) {
-
+        addHeader(name, String.valueOf(value));
     }
 
     @Override
@@ -188,5 +193,9 @@ public class HttpCocaineResponse implements HttpServletResponse {
 
     public void closeOutput() throws IOException {
         outputStream.close();
+    }
+
+    public Multimap<String, String> getHeaders() {
+        return headers;
     }
 }

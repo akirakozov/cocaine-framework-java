@@ -8,7 +8,9 @@ import rx.Observer;
 import javax.servlet.ServletOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -62,7 +64,13 @@ public class HttpCocaineOutputStream extends ServletOutputStream {
 
     private byte[] serializeMetaData() throws IOException {
         int status = response.getStatus();
-        // TODO: serialize HEADERS and other meta information
-        return PACK.write(Arrays.asList(status, Arrays.asList()));
+        return PACK.write(Arrays.asList(status, packHeaders()));
+    }
+
+    private List<List<String>> packHeaders() {
+        List<List<String>> headers = new ArrayList<>();
+        response.getHeaders().entries().stream()
+                .forEach(it -> headers.add(Arrays.asList(it.getKey(), it.getValue())));
+        return headers;
     }
 }
