@@ -3,6 +3,8 @@ package cocaine;
 import rx.Observable;
 import rx.Observer;
 
+import java.util.Map;
+
 /**
  * @author akirakozov
  */
@@ -21,5 +23,9 @@ public class DefaultInvoker implements Invoker {
         } else {
             throw new UnknownClientMethodException(event);
         }
+    }
+
+    public static DefaultInvoker createFromHandlers(Map<String, EventHandler> handlers) {
+        return new DefaultInvoker(new DefaultEventHandlersProvider(handlers));
     }
 }

@@ -19,18 +19,22 @@ public final class Runner {
 
     private static final Logger logger = Logger.getLogger(Runner.class);
 
-    public static void run(Map<String, EventHandler> handlers, String[] args) {
+    public static void run(Invoker invoker, String[] args) {
         WorkerOptions options = new WorkerOptions();
         new JCommander(options).parse(args);
 
-        logger.info("Running " + options.getApplication() + " application:\n  " + printHandlers(handlers));
+        logger.info("Running " + options.getApplication() + " application");
 
-        try (Worker worker = new Worker(options, handlers)) {
+        try (Worker worker = new Worker(options, invoker)) {
             worker.run();
             worker.join();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
+    }
+
+    public static void run(Map<String, EventHandler> handlers, String[] args) {
+        run(DefaultInvoker.createFromHandlers(handlers), args);
     }
 
     public static void run(Object container, String[] args) {
@@ -44,11 +48,6 @@ public final class Runner {
             }
         }
         Runner.run(handlers, args);
-    }
-
-    private static String printHandlers(Map<String, EventHandler> handlers) {
-        return Joiner.on("\n  ").withKeyValueSeparator(": ")
-                .join(Maps.transformValues(handlers, h -> h.getClass().getName()));
     }
 
     private static final class MethodEventHandler implements EventHandler {

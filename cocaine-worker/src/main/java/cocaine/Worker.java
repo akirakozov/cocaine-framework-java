@@ -40,7 +40,7 @@ public class Worker implements AutoCloseable {
     private Disown disown;
 
     Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
-        this(options, new DefaultInvoker(new DefaultEventHandlersProvider(handlers)));
+        this(options, DefaultInvoker.createFromHandlers(handlers));
     }
 
     Worker(WorkerOptions options, Invoker invoker) {
