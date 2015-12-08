@@ -29,7 +29,7 @@ public class Worker implements AutoCloseable {
 
     private final MessagePack pack;
     private final WorkerOptions options;
-    private final Map<String, EventHandler> handlers;
+    private final Invoker invoker;
     private final WorkerSessions sessions;
     private final Timer heartbeats;
     private final Timer disowns;
@@ -40,11 +40,15 @@ public class Worker implements AutoCloseable {
     private Disown disown;
 
     Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
+        this(options, new DefaultInvoker(new DefaultEventHandlersProvider(handlers)));
+    }
+
+    Worker(WorkerOptions options, Invoker invoker) {
         this.pack = new MessagePack();
         this.pack.register(Message.class, MessageTemplate.getInstance());
         this.pack.register(WorkerMessage.class, WorkerMessageTemplate.getInstance());
         this.options = options;
-        this.handlers = handlers;
+        this.invoker = invoker;
         this.sessions = new WorkerSessions(this);
         this.maxSession = 0L;
         this.heartbeats = new Timer(getThreadName("Worker Heartbeats"), true);
@@ -171,15 +175,13 @@ public class Worker implements AutoCloseable {
         logger.debug("Invoke has been received " + msg);
         WorkerSessions.Session session = this.sessions.create(msg.getSession());
 
+        String event = msg.getEvent();
         try {
-            String event = msg.getEvent();
-            if (this.handlers.containsKey(event)) {
-                this.handlers.get(event).handle(session.getInput(), session.getOutput());
-            } else {
-                logger.warn("No handler for '" + event + "' event is registered");
-                write(Messages.error(msg.getSession(), ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.ENOHANDLER,
-                        "No handler for '" + event + "' event is registered"));
-            }
+            this.invoker.invoke(event, session.getInput(), session.getOutput());
+        } catch (UnknownClientMethodException e) {
+            logger.warn("No handler for '" + event + "' event is registered");
+            write(Messages.error(msg.getSession(), ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.ENOHANDLER,
+                    "No handler for '" + event + "' event is registered"));
         } catch (Exception e) {
             logger.error("Invocation failed: " + e.getMessage());
             write(Messages.error(msg.getSession(), ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.EINVFAILED,
@@ -204,7 +206,7 @@ public class Worker implements AutoCloseable {
     private void dispatchError(ErrorMessage msg) {
         logger.debug("Error has been received " + msg.getCode() + " " + msg.getMessage());
         this.sessions.onError(msg.getSession(),
-                new ClientErrorException(options.getApplication(), msg.getMessage(), msg.getCode()));
+                new ClientErrorException(msg.getMessage(), msg.getCode()));
     }
 
     void sendHandShake() {
