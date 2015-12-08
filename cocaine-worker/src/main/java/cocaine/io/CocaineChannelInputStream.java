@@ -11,7 +11,7 @@ import java.util.Iterator;
  */
 public class CocaineChannelInputStream extends InputStream {
     private Iterator<byte[]> it;
-    private int offset = 0;
+    private int offset;
     private byte[] buffer;
 
     public CocaineChannelInputStream(Observable<byte[]> observable) {
@@ -19,6 +19,11 @@ public class CocaineChannelInputStream extends InputStream {
         offset = 0;
     }
 
+    public CocaineChannelInputStream(byte[] initialBuffer, Iterator<byte[]> it) {
+        this.it = it;
+        buffer = initialBuffer;
+        offset = 0;
+    }
 
     @Override
     public int read() throws IOException {
