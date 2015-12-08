@@ -9,8 +9,8 @@ public class UnexpectedClientMessageException extends ClientException {
 
     private final WorkerMessage msg;
 
-    public UnexpectedClientMessageException(String application, WorkerMessage msg) {
-        super(application, "Unexpected message: " + msg.toString());
+    public UnexpectedClientMessageException(WorkerMessage msg) {
+        super("Unexpected message: " + msg.toString());
         this.msg = msg;
     }
 

@@ -5,15 +5,8 @@ package cocaine;
  */
 public class ClientException extends CocaineException {
 
-    private final String application;
-
-    public ClientException(String application, String message) {
-        super(application + " - " + message);
-        this.application = application;
-    }
-
-    public String getApplication() {
-        return application;
+    public ClientException(String message) {
+        super(message);
     }
 
 }

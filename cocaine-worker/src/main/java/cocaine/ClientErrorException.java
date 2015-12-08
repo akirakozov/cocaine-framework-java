@@ -7,8 +7,8 @@ public class ClientErrorException extends ClientException {
 
     private final int code;
 
-    public ClientErrorException(String application, String message, int code) {
-        super(application, code + " - " + message);
+    public ClientErrorException(String message, int code) {
+        super(code + " - " + message);
         this.code = code;
     }
 

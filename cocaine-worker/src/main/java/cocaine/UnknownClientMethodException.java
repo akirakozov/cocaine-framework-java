@@ -5,8 +5,8 @@ package cocaine;
  */
 public class UnknownClientMethodException extends ClientException {
 
-    public UnknownClientMethodException(String application, String method) {
-        super(application, "Unknown application method: " + method);
+    public UnknownClientMethodException(String method) {
+        super("Unknown application method: " + method);
     }
 
 }
