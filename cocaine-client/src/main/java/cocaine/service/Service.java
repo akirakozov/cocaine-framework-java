@@ -2,6 +2,7 @@ package cocaine.service;
 
 import cocaine.CocaineException;
 import cocaine.api.ServiceApi;
+import cocaine.api.TransactionTree;
 import cocaine.netty.ServiceMessageHandler;
 import cocaine.session.*;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
@@ -80,11 +81,17 @@ public class Service implements  AutoCloseable {
         return session;
     }
 
-    public boolean isPrimitiveApiMethod(String method) {
+    public boolean isPrimitiveOrIdentityApiMethod(String method) {
+        TransactionTree rxTree = api.getReceiveTree(method);
+        TransactionTree txTree = api.getTransmitTree(method);
+        if (rxTree.isEmpty() && txTree.isEmpty()) {
+            return true;
+        }
+
         boolean isPrimitiveRxProtocol = Objects.equals(
                 PrimitiveProtocol.instance().getAllMessageTypes(),
-                api.getReceiveTree(method).getAllMessageTypes());
-        return isPrimitiveRxProtocol && api.getTransmitTree(method).isEmpty();
+                rxTree.getAllMessageTypes());
+        return isPrimitiveRxProtocol && txTree.isEmpty();
     }
 
     @Override

@@ -5,6 +5,7 @@ import cocaine.UnexpectedServiceMessageException;
 import cocaine.api.TransactionTree;
 import cocaine.api.TransactionTree.TransactionInfo;
 import cocaine.session.protocol.CocaineProtocol;
+import cocaine.session.protocol.IdentityProtocol;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
 import rx.subjects.ReplaySubject;
@@ -42,6 +43,11 @@ public class ReceiveChannel<T> {
     }
 
     public T get() {
+        if (protocol instanceof IdentityProtocol) {
+            subject.onCompleted();
+            return null;
+        }
+
         ResultMessage msg = subject.skip(curMessageNum.getAndIncrement()).toBlocking().first();
         Value payload = protocol.handle(serviceName, msg.messageType, msg.payload);
         try {

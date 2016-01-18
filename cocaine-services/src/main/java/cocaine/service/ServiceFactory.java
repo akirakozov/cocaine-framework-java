@@ -136,16 +136,16 @@ public class ServiceFactory {
                     thisMethod.getAnnotation(CocaineMethod.class),
                     "Service method must be annotated with @CocaineMethod annotation");
             String method = getMethod(thisMethod);
-            boolean isPrimitiveMethod = service.isPrimitiveApiMethod(method);
+            boolean isSimpleMethod = service.isPrimitiveOrIdentityApiMethod(method);
 
             Invokable<?, Object> invokable = Invokable.from(thisMethod);
             Parameter[] parameters = Iterables.toArray(invokable.getParameters(), Parameter.class);
-            Class<?> resultClass = getResultType(invokable.getReturnType(), isPrimitiveMethod);
+            Class<?> resultClass = getResultType(invokable.getReturnType(), isSimpleMethod);
             CocainePayloadDeserializer deserializer = findDeserializer(methodDescriptor, resultClass);
 
             List<Object> arguments = getArgs(thisMethod, parameters, args);
 
-            if (isPrimitiveMethod) {
+            if (isSimpleMethod) {
                 // return value directly for primitive value-error methods
                 try (Session<?> session = service.invoke(method, deserializer, arguments)) {
                     return session.rx().get();
