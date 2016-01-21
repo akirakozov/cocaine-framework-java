@@ -39,11 +39,11 @@ public class Worker implements AutoCloseable {
     private UnixDomainSocket socket;
     private Disown disown;
 
-    Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
+    public Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
         this(options, DefaultInvoker.createFromHandlers(handlers));
     }
 
-    Worker(WorkerOptions options, Invoker invoker) {
+    public Worker(WorkerOptions options, Invoker invoker) {
         this.pack = new MessagePack();
         this.pack.register(Message.class, MessageTemplate.getInstance());
         this.pack.register(WorkerMessage.class, WorkerMessageTemplate.getInstance());
