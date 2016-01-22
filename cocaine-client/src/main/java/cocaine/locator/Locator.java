@@ -44,10 +44,10 @@ public final class Locator implements AutoCloseable {
     private final Bootstrap bootstrap;
     private final Service service;
 
-    private Locator(SocketAddress endpoint) {
+    private Locator(SocketAddress endpoint, MessagePack pack) {
         this.endpoint = endpoint;
         this.eventLoop = new NioEventLoopGroup(1);
-        this.pack = new MessagePack();
+        this.pack = pack;
         this.bootstrap = new Bootstrap()
                 .group(eventLoop)
 
@@ -70,12 +70,16 @@ public final class Locator implements AutoCloseable {
     }
 
     public static Locator create() {
-        return create(localhost);
+        return create(localhost, new MessagePack());
     }
 
-    public static Locator create(SocketAddress endpoint) {
+    public static Locator create(MessagePack pack) {
+        return create(localhost, pack);
+    }
+
+    public static Locator create(SocketAddress endpoint, MessagePack pack) {
         logger.info("Creating locator " + endpoint);
-        return new Locator(endpoint);
+        return new Locator(endpoint, pack);
     }
 
     public Service service(final String name) {
