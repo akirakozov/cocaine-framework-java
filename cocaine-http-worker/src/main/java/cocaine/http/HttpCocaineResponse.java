@@ -17,8 +17,8 @@ import java.util.Locale;
  * @author akirakozov
  */
 public class HttpCocaineResponse implements HttpServletResponse {
-    // TODO: constants
-    private int status = 200;
+    private int status = HttpStatus.SC_200_OK;
+
     private final Multimap<String, String> headers;
     private final HttpCocaineOutputStream outputStream;
 
