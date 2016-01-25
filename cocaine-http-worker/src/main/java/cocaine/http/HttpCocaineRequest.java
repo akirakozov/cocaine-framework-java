@@ -135,12 +135,14 @@ public class HttpCocaineRequest implements HttpServletRequest {
 
     @Override
     public String getRequestURI() {
-        return null;
+        return metaData.getPath();
     }
 
     @Override
     public StringBuffer getRequestURL() {
-        return null;
+        // There are no information about whole url,
+        // because of cocaine-http abtract level
+        return new StringBuffer(metaData.getPath());
     }
 
     @Override
