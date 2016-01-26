@@ -9,6 +9,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Locale;
@@ -17,10 +18,19 @@ import java.util.Locale;
  * @author akirakozov
  */
 public class HttpCocaineResponse implements HttpServletResponse {
-    private int status = HttpStatus.SC_200_OK;
-
     private final Multimap<String, String> headers;
     private final HttpCocaineOutputStream outputStream;
+
+    private int status = HttpStatus.SC_200_OK;
+    private String characterEncoding = null;
+    private String contentType = null;
+    private OutputState outState = OutputState.NONE;
+
+    private enum OutputState {
+        NONE,
+        STREAM,
+        WRITER
+    };
 
     public HttpCocaineResponse(Observer<byte[]> output) {
         this.outputStream = new HttpCocaineOutputStream(output, this);
@@ -118,27 +128,42 @@ public class HttpCocaineResponse implements HttpServletResponse {
 
     @Override
     public String getCharacterEncoding() {
-        return null;
+        return characterEncoding;
     }
 
     @Override
     public String getContentType() {
-        return null;
+        return contentType;
     }
 
     @Override
     public ServletOutputStream getOutputStream() throws IOException {
+        if (outState == OutputState.WRITER) {
+            throw new IllegalStateException("WRITER");
+        }
+        outState = OutputState.STREAM;
         return outputStream;
     }
 
     @Override
     public PrintWriter getWriter() throws IOException {
-        throw new UnsupportedOperationException();
+        if (outState == OutputState.STREAM) {
+            throw new IllegalStateException("STREAM");
+        }
+
+        if (characterEncoding == null) {
+            setCharacterEncoding("utf-8");
+        }
+        outState = OutputState.WRITER;
+
+        return new PrintWriter(new OutputStreamWriter(outputStream, characterEncoding));
     }
 
     @Override
     public void setCharacterEncoding(String charset) {
-
+        checkNoneOutput();
+        characterEncoding = charset;
+        updateContentTypeHeader();
     }
 
     @Override
@@ -148,7 +173,9 @@ public class HttpCocaineResponse implements HttpServletResponse {
 
     @Override
     public void setContentType(String type) {
-
+        checkNoneOutput();
+        contentType = type;
+        updateContentTypeHeader();
     }
 
     @Override
@@ -197,5 +224,21 @@ public class HttpCocaineResponse implements HttpServletResponse {
 
     public Multimap<String, String> getHeaders() {
         return headers;
+    }
+
+    private void checkNoneOutput() {
+        if (outState != OutputState.NONE) {
+            throw new IllegalStateException("Set headers before getting output");
+        }
+    }
+
+    private void updateContentTypeHeader() {
+        headers.removeAll(HttpHeader.CONTENT_TYPE);
+
+        if (contentType != null) {
+            String val = contentType;
+            val += characterEncoding == null ? "" : ";charset=" + characterEncoding;
+            headers.put(HttpHeader.CONTENT_TYPE, val);
+        }
     }
 }

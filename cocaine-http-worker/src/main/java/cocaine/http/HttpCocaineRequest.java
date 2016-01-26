@@ -202,12 +202,12 @@ public class HttpCocaineRequest implements HttpServletRequest {
 
     @Override
     public int getContentLength() {
-        return getIntHeader(HttpHeader.CONTENT_LENGTH.getValue());
+        return getIntHeader(HttpHeader.CONTENT_LENGTH);
     }
 
     @Override
     public String getContentType() {
-        return getHeader(HttpHeader.CONTENT_TYPE.getValue());
+        return getHeader(HttpHeader.CONTENT_TYPE);
     }
 
     @Override

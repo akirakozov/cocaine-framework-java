@@ -3,22 +3,8 @@ package cocaine.http;
 /**
  * @author akirakozov
  */
-public enum HttpHeader {
-    CONTENT_TYPE("Content-Type"),
-    CONTENT_LENGTH("Content-Length");
+public class HttpHeader {
+    public static final String CONTENT_TYPE = "Content-Type";
+    public static final String CONTENT_LENGTH = "Content-Length";
 
-    private final String value;
-
-    HttpHeader(String value) {
-        this.value = value;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    @Override
-    public String toString() {
-        return value;
-    }
 }
