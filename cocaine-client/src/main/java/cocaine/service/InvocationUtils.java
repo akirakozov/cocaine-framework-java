@@ -2,7 +2,6 @@ package cocaine.service;
 
 import com.google.common.base.Joiner;
 import io.netty.channel.Channel;
-import org.apache.log4j.Logger;
 import org.msgpack.MessagePackable;
 import org.msgpack.packer.Packer;
 import org.msgpack.unpacker.Unpacker;
@@ -14,8 +13,6 @@ import java.util.List;
  * @author akirakozov
  */
 public class InvocationUtils {
-    private static final Logger logger = Logger.getLogger(InvocationUtils.class);
-
     public static void invoke(Channel channel, long sessionId, int method, List<Object> args) {
         channel.write(new InvocationRequest(method, sessionId, args));
     }
