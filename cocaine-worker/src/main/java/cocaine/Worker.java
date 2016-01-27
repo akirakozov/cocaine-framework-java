@@ -65,7 +65,7 @@ public class Worker implements AutoCloseable {
     }
 
     public void stop() {
-        this.dispatcher.interrupt();
+        stopDispatcher();
         this.heartbeats.cancel();
         this.disowns.cancel();
         this.sessions.onCompleted();
@@ -86,6 +86,10 @@ public class Worker implements AutoCloseable {
     @Override
     public void close() {
         stop();
+    }
+
+    protected void stopDispatcher() {
+        this.dispatcher.interrupt();
     }
 
     private void dispatch(Message message) {
