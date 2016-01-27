@@ -17,8 +17,6 @@ public class InvocationUtils {
     private static final Logger logger = Logger.getLogger(InvocationUtils.class);
 
     public static void invoke(Channel channel, long sessionId, int method, List<Object> args) {
-        logger.debug("Invoking " + method + "(" + Joiner.on(", ").join(args) + ") asynchronously");
-
         channel.write(new InvocationRequest(method, sessionId, args));
     }
 
