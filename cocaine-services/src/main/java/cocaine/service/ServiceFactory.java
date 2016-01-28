@@ -87,7 +87,15 @@ public class ServiceFactory {
     }
 
     private static boolean isToString(Method method) {
-        return method.getName().equals("toString") && method.getParameterTypes().length == 0;
+        return isNoArgMethodWithName(method, "toString");
+    }
+
+    private static boolean isClose(Method method) {
+        return isNoArgMethodWithName(method, "close");
+    }
+
+    private static boolean isNoArgMethodWithName(Method method, String name) {
+        return method.getName().equals(name) && method.getParameterTypes().length == 0;
     }
 
     private static Class<?> getResultType(TypeToken<?> returnType, boolean isPrimitiveMethod) {
@@ -127,7 +135,7 @@ public class ServiceFactory {
         public Object invoke(Object self, Method thisMethod, Method proceed, Object[] args) throws Throwable {
             if (isToString(thisMethod)) {
                 return service.toString();
-            } else if (thisMethod.equals(close)) {
+            } else if (isClose(thisMethod)) {
                 service.close();
                 return null;
             }
