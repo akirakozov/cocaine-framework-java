@@ -24,7 +24,7 @@ public final class WriteMessage extends WorkerMessage {
 
     @Override
     public String toString() {
-        return "WriteMessage/" + getSession() + ": " + Arrays.toString(data);
+        return "WriteMessage/" + getSession() + ": data size - " + data.length;
     }
 
     @Override
