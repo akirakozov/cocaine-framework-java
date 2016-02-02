@@ -160,6 +160,7 @@
 
     <build>
         <plugins>
+            <!--
             <plugin>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.4</version>
@@ -176,6 +177,7 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
         </plugins>
         <pluginManagement>
             <plugins>
