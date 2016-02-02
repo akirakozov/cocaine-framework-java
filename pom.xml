@@ -42,6 +42,17 @@
             </roles>
             <timezone>+4</timezone>
         </developer>
+        <developer>
+            <id>akirakozov</id>
+            <name>Alexander Kirakozov</name>
+            <email>akirakozov@yandex-team.ru</email>
+            <organization>Yandex</organization>
+            <organizationUrl>http://www.yandex.ru</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>+4</timezone>
+        </developer>
     </developers>
 
     <modules>
