@@ -4,6 +4,8 @@ import cocaine.annotations.CocaineMethod;
 import cocaine.annotations.CocaineService;
 import org.apache.log4j.Level;
 
+import java.util.List;
+
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
@@ -15,6 +17,9 @@ public interface Logging extends AutoCloseable {
 
     @CocaineMethod("emit")
     void append(Level level, String name, String message);
+
+    @CocaineMethod("emit")
+    void append(Level level, String name, String message, List<List<String>> attrs);
 
     @Override
     void close();
