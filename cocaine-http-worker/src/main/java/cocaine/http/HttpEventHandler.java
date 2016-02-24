@@ -8,6 +8,9 @@ import rx.Observer;
 
 import javax.servlet.http.HttpServlet;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Locale;
 
 /**
  * @author akirakozov
@@ -24,18 +27,31 @@ public class HttpEventHandler implements EventHandler {
     @Override
     public void handle(Observable<byte[]> request, Observer<byte[]> response) throws Exception {
         HttpCocaineResponse resp = null;
+        HttpCocaineRequest req = null;
+        Instant start = Instant.now();
 
         try {
-            HttpCocaineRequest req = new HttpCocaineRequest(request);
+            req = new HttpCocaineRequest(request);
             resp = new HttpCocaineResponse(response);
             servlet.service(req, resp);
         } catch (Exception e) {
             handleError(resp, e);
         } finally {
             if (resp != null) {
-                resp.closeOutput();
+                try {
+                    logStatus(req, resp, start);
+                } finally {
+                    resp.closeOutput();
+                }
             }
         }
+    }
+
+    private void logStatus(HttpCocaineRequest req, HttpCocaineResponse resp, Instant start) {
+        double seconds = ((double) Duration.between(start, Instant.now()).toMillis()) / 1000;
+        String msg = String.format(Locale.ENGLISH, "\"%s %s\" %d %.3f",
+                req.getMethod(), req.getRequestURI(), resp.getStatus(), seconds);
+        logger.info(msg);
     }
 
     protected void handleError(HttpCocaineResponse resp, Exception e) throws IOException {
