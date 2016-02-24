@@ -49,8 +49,9 @@ public class HttpEventHandler implements EventHandler {
 
     private void logStatus(HttpCocaineRequest req, HttpCocaineResponse resp, Instant start) {
         double seconds = ((double) Duration.between(start, Instant.now()).toMillis()) / 1000;
+        String pathWithArgs = req.getRequestURI() + "?" + req.getQueryString();
         String msg = String.format(Locale.ENGLISH, "\"%s %s\" %d %.3f",
-                req.getMethod(), req.getRequestURI(), resp.getStatus(), seconds);
+                req.getMethod(), pathWithArgs, resp.getStatus(), seconds);
         logger.info(msg);
     }
 
