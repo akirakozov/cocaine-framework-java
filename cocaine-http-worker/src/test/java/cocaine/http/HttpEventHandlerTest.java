@@ -40,8 +40,8 @@ public class HttpEventHandlerTest {
         handler.handle(request, response);
         List<byte[]> results = response.getOnNextEvents();
         Assert.assertEquals("Incorrect events count", 2, results.size());
-        Assert.assertEquals("Incoreect status code", 200, getStatusCode(results.get(0)));
-        Assert.assertEquals("Incorrect respone", "Hello!", new String(results.get(1)));
+        Assert.assertEquals("Incorrect status code", 200, getStatusCode(results.get(0)));
+        Assert.assertEquals("Incorrect response", "Hello!", new String(results.get(1)));
     }
 
     private int getStatusCode(byte[] data) throws IOException {
