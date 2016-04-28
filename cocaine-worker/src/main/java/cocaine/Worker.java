@@ -38,6 +38,7 @@ public class Worker implements AutoCloseable {
 
     private UnixDomainSocket socket;
     private Disown disown;
+    private Object socketWriteLock = new Object();
 
     public Worker(WorkerOptions options, Map<String, EventHandler> handlers) {
         this(options, DefaultInvoker.createFromHandlers(handlers));
@@ -241,9 +242,13 @@ public class Worker implements AutoCloseable {
             logger.error("No socket connection was established");
             return;
         }
+
         try {
-            socket.getOutputStream().write(pack.write(message));
-            socket.getOutputStream().flush();
+            byte[] data = pack.write(message);
+            synchronized (socketWriteLock) {
+                socket.getOutputStream().write(data);
+                socket.getOutputStream().flush();
+            }
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
         }
