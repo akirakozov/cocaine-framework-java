@@ -251,6 +251,7 @@ public class Worker implements AutoCloseable {
             }
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
+            throw Throwables.propagate(e);
         }
     }
 
