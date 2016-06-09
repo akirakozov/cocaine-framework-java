@@ -44,4 +44,8 @@ public class MultiThreadInvoker implements Invoker {
             throw new UnknownClientMethodException(event);
         }
     }
+
+    public ExecutorService getExecutor() {
+        return executor;
+    }
 }
