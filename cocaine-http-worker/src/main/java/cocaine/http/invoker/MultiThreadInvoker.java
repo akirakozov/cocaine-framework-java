@@ -21,7 +21,11 @@ public class MultiThreadInvoker implements Invoker {
     private final EventHandlersProvider provider;
 
     public MultiThreadInvoker(int threadsCount, EventHandlersProvider provider) {
-        this.executor = Executors.newFixedThreadPool(threadsCount);
+        this(threadsCount, "MTInvoker", provider);
+    }
+
+    public MultiThreadInvoker(int threadsCount, String threadsNamePrefix, EventHandlersProvider provider) {
+        this.executor = Executors.newFixedThreadPool(threadsCount, new NamedThreadFactory(threadsNamePrefix));
         this.provider = provider;
     }
 
