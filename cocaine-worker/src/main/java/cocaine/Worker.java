@@ -165,19 +165,19 @@ public class Worker implements AutoCloseable {
     }
 
     private void dispatchHeartbeat(HeartbeatMessage msg) {
-        logger.debug("Heartbeat has been received. Stop disown timer");
+        logger.info("Heartbeat has been received. Stop disown timer");
         if (this.disown != null) {
             this.disown.cancel();
         }
     }
 
     private void dispatchTerminate(TerminateMessage msg) {
-        logger.debug("Terminate has been received " + msg.getReason() + " " + msg.getMessage());
+        logger.info("Terminate has been received " + msg.getReason() + " " + msg.getMessage());
         this.terminate(msg.getReason(), msg.getMessage());
     }
 
     private void dispatchInvoke(InvokeMessage msg) {
-        logger.debug("Invoke has been received " + msg);
+        logger.info("Invoke has been received " + msg);
         WorkerSessions.Session session = this.sessions.create(msg.getSession());
 
         String event = msg.getEvent();
@@ -195,7 +195,7 @@ public class Worker implements AutoCloseable {
     }
 
     private void dispatchWrite(WriteMessage msg) {
-        logger.debug("Chunk has been received " + msg.getSession());
+        logger.info("Chunk has been received " + msg.getSession());
         try {
             this.sessions.onChunk(msg.getSession(), msg.getData());
         } catch (Exception e) {
@@ -204,12 +204,12 @@ public class Worker implements AutoCloseable {
     }
 
     private void dispatchClose(CloseMessage msg) {
-        logger.debug("Choke has been received " + msg.getSession());
+        logger.info("Choke has been received " + msg.getSession());
         this.sessions.onCompleted(msg.getSession());
     }
 
     private void dispatchError(ErrorMessage msg) {
-        logger.debug("Error has been received " + msg.getCode() + " " + msg.getMessage());
+        logger.info("Error has been received " + msg.getCode() + " " + msg.getMessage());
         this.sessions.onError(msg.getSession(),
                 new ClientErrorException(msg.getMessage(), msg.getCode()));
     }
@@ -222,7 +222,7 @@ public class Worker implements AutoCloseable {
         this.disown = new Disown();
         this.disowns.schedule(this.disown, options.getDisownTimeout());
         this.write(HEARTBEAT);
-        logger.debug("Heartbeat has been sent. Start disown timer");
+        logger.info("Heartbeat has been sent. Start disown timer");
     }
 
     void sendChoke(long session) {
