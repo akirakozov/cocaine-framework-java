@@ -68,6 +68,14 @@ public class WorkerOptions {
         return protocol;
     }
 
+    public void setDisownTimeout(int disownTimeout) {
+        this.disownTimeout = disownTimeout;
+    }
+
+    public void setHeartbeatTimeout(int heartbeatTimeout) {
+        this.heartbeatTimeout = heartbeatTimeout;
+    }
+
     @Override
     public String toString() {
         return "WorkerOptions{endpoint: " + endpoint
