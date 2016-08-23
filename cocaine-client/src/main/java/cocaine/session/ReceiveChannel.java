@@ -8,12 +8,11 @@ import cocaine.session.protocol.CocaineProtocol;
 import cocaine.session.protocol.IdentityProtocol;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
-import rx.subjects.ReplaySubject;
-import rx.subjects.Subject;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author akirakozov
@@ -22,11 +21,13 @@ public class ReceiveChannel<T> {
     private static final Logger logger = Logger.getLogger(ReceiveChannel.class);
 
     private TransactionTree rxTree;
-    private final Subject<ResultMessage, ResultMessage> subject;
-    private final AtomicInteger curMessageNum;
+    private final BlockingQueue<ResultMessage> queue;
     private final CocaineProtocol protocol;
     private final CocainePayloadDeserializer<T> deserializer;
     private final String serviceName;
+
+    private boolean completed = false;
+    private boolean hasError = false;
 
     public ReceiveChannel(
             String serviceName,
@@ -36,19 +37,18 @@ public class ReceiveChannel<T> {
     {
         this.serviceName = serviceName;
         this.rxTree = rxTree;
-        this.subject = ReplaySubject.create();
-        this.curMessageNum = new AtomicInteger(0);
+        this.queue = new LinkedBlockingQueue<>();
         this.protocol = protocol;
         this.deserializer = deserializer;
     }
 
     public T get() {
         if (protocol instanceof IdentityProtocol) {
-            subject.onCompleted();
+            onCompleted();
             return null;
         }
 
-        ResultMessage msg = subject.skip(curMessageNum.getAndIncrement()).toBlocking().first();
+        PayloadResultMessage msg = getNextPayloadMessage();
         Value payload = protocol.handle(serviceName, msg.messageType, msg.payload);
         try {
             if (payload != null) {
@@ -66,10 +66,11 @@ public class ReceiveChannel<T> {
     void onRead(int type, Value payload) {
         Optional<TransactionInfo> info = rxTree.getInfo(type);
         if (!info.isPresent()) {
-            subject.onError(new UnexpectedServiceMessageException(serviceName, type));
+            putMessageInQueue(new ErrorResultMessage(new UnexpectedServiceMessageException(serviceName, type)));
             logger.error("Unknown message type: " + type + ", for service " + serviceName);
         } else {
-            subject.onNext(new ResultMessage(info.get().getMessageName(), payload));
+            putMessageInQueue(new PayloadResultMessage(info.get().getMessageName(), payload));
+
             TransactionTree tree = info.get().getTree();
             if (!tree.isCycle()) {
                 if (tree.isEmpty()) {
@@ -82,17 +83,68 @@ public class ReceiveChannel<T> {
         }
     }
 
-    public void onCompleted() {
-        subject.onCompleted();
+    private PayloadResultMessage getNextPayloadMessage() {
+        try {
+            if (completed && queue.isEmpty()) {
+                throw new ServiceException(serviceName, "Read channel is completed and has empty queue");
+            }
+
+            ResultMessage nextMessage = queue.take();
+            if (nextMessage.isErrorMessage()) {
+                Exception error = ((ErrorResultMessage) nextMessage).error;
+                throw new ServiceException(serviceName, error.getClass().getName() + ": " + error.getMessage());
+            } else {
+                return (PayloadResultMessage) nextMessage;
+            }
+        } catch (InterruptedException e) {
+            throw new ServiceException(serviceName, "Reading interrupted, " + e.getMessage());
+        }
     }
 
-    private static class ResultMessage {
+    private void putMessageInQueue(ResultMessage resultMessage) {
+        try {
+            if (!completed && !hasError) {
+                queue.put(resultMessage);
+            }
+            hasError = hasError || resultMessage.isErrorMessage();
+        } catch (InterruptedException e) {
+            throw new ServiceException(serviceName, "Putting message in queue interrupted, " + e.getMessage());
+        }
+    }
+
+    public void onCompleted() {
+        completed = true;
+    }
+
+    private static abstract class ResultMessage {
+        public abstract boolean isErrorMessage();
+    }
+
+    private static class PayloadResultMessage extends ResultMessage {
         private String messageType;
         private Value payload;
 
-        public ResultMessage(String messageType, Value payload) {
+        public PayloadResultMessage(String messageType, Value payload) {
             this.messageType = messageType;
             this.payload = payload;
+        }
+
+        @Override
+        public boolean isErrorMessage() {
+            return false;
+        }
+    }
+
+    private static class ErrorResultMessage extends ResultMessage {
+        private Exception error;
+
+        public ErrorResultMessage(Exception error) {
+            this.error = error;
+        }
+
+        @Override
+        public boolean isErrorMessage() {
+            return true;
         }
     }
 }

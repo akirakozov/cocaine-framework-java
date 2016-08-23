@@ -1,9 +1,9 @@
-package cocaine;
+package cocaine.service;
 
+import cocaine.*;
 import cocaine.annotations.CocaineMethod;
 import cocaine.annotations.CocaineService;
 import cocaine.locator.Locator;
-import cocaine.service.Service;
 import cocaine.session.CocainePayloadDeserializer;
 import cocaine.session.Session;
 import com.google.common.base.Preconditions;
@@ -45,6 +45,7 @@ public class ServiceFactory {
     public ServiceFactory(Locator locator) {
         this(locator, new MessagePack());
     }
+
     public ServiceFactory(Locator locator, MessagePack msgPack) {
         this.locator = locator;
         this.serializers = ImmutableList.of(new MessagePackSerializer(msgPack));
