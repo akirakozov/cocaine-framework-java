@@ -21,10 +21,12 @@ public class Sessions {
     private final AtomicLong counter;
     private final Map<Long, Session> sessions;
     private final String service;
+    private final long readTimeout;
     private final CocaineProtocolsRegistry protocolsRegistry;
 
-    public Sessions(String service, CocaineProtocolsRegistry protocolsRegistry) {
+    public Sessions(String service, long readTimeout, CocaineProtocolsRegistry protocolsRegistry) {
         this.service = service;
+        this.readTimeout = readTimeout;
         this.counter = new AtomicLong(1);
         this.sessions = new ConcurrentHashMap<>();
         this.protocolsRegistry = protocolsRegistry;
@@ -38,7 +40,7 @@ public class Sessions {
 
         logger.debug("Creating new session: " + id);
         CocaineProtocol protocol = protocolsRegistry.findProtocol(rx);
-        Session session = new Session(id, service, rx, tx, protocol, this, channel, deserializer);
+        Session session = new Session(id, service, rx, tx, readTimeout, protocol, this, channel, deserializer);
         sessions.put(id, session);
         return session;
     }

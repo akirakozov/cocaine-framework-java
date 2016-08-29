@@ -16,13 +16,14 @@ public class Session<T> implements AutoCloseable {
     public Session(
             long id, String serviceName,
             TransactionTree rx, TransactionTree tx,
+            long readTimeout,
             CocaineProtocol protocol,
             Sessions sessions,
             Channel channel,
             CocainePayloadDeserializer deserializer)
     {
         this.id = id;
-        this.rx = new ReceiveChannel(serviceName, rx, protocol, deserializer);
+        this.rx = new ReceiveChannel(serviceName, rx, protocol, deserializer, readTimeout);
         this.tx = new TransmitChannel(serviceName, tx, channel, id);
         this.sessions = sessions;
     }

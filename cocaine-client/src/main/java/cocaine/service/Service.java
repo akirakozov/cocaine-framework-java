@@ -37,31 +37,33 @@ public class Service implements  AutoCloseable {
 
     private Service(
             String name, ServiceApi api, Bootstrap bootstrap,
-            Supplier<SocketAddress> endpoint, CocaineProtocolsRegistry protocolsRegistry)
+            Supplier<SocketAddress> endpoint, long readTimeout, CocaineProtocolsRegistry protocolsRegistry)
     {
         this.name = name;
-        this.sessions = new Sessions(name, protocolsRegistry);
+        this.sessions = new Sessions(name, readTimeout, protocolsRegistry);
         this.api = api;
         this.closed = new AtomicBoolean(false);
         connect(bootstrap, endpoint, new ServiceMessageHandler(name, sessions));
     }
 
-    private Service(String name, ServiceApi api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint) {
-        this(name, api, bootstrap, endpoint, DefaultCocaineProtocolRegistry.getDefaultRegistry());
+    private Service(String name, ServiceApi api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
+            long readTimeout)
+    {
+        this(name, api, bootstrap, endpoint, readTimeout, DefaultCocaineProtocolRegistry.getDefaultRegistry());
     }
 
     public static Service create(
-            String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
+            String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint, long readTimeout,
             ServiceApi api, CocaineProtocolsRegistry protocolsRegistry)
     {
-        return new Service(name, api, bootstrap, endpoint, protocolsRegistry);
+        return new Service(name, api, bootstrap, endpoint, readTimeout, protocolsRegistry);
     }
 
     public static Service create(
             String name, Bootstrap bootstrap,
-            Supplier<SocketAddress> endpoint, ServiceApi api)
+            Supplier<SocketAddress> endpoint, long readTimeout, ServiceApi api)
     {
-        return new Service(name, api, bootstrap, endpoint);
+        return new Service(name, api, bootstrap, endpoint, readTimeout);
     }
 
     public Session<Value> invoke(String method, List<Object> args) {

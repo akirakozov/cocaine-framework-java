@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author akirakozov
@@ -25,6 +26,7 @@ public class ReceiveChannel<T> {
     private final CocaineProtocol protocol;
     private final CocainePayloadDeserializer<T> deserializer;
     private final String serviceName;
+    private final long readTimeout;
 
     private boolean completed = false;
     private boolean hasError = false;
@@ -33,13 +35,15 @@ public class ReceiveChannel<T> {
             String serviceName,
             TransactionTree rxTree,
             CocaineProtocol protocol,
-            CocainePayloadDeserializer<T> deserializer)
+            CocainePayloadDeserializer<T> deserializer,
+            long readTimeout)
     {
         this.serviceName = serviceName;
         this.rxTree = rxTree;
         this.queue = new LinkedBlockingQueue<>();
         this.protocol = protocol;
         this.deserializer = deserializer;
+        this.readTimeout = readTimeout;
     }
 
     public T get() {
@@ -89,7 +93,7 @@ public class ReceiveChannel<T> {
                 throw new ServiceException(serviceName, "Read channel is completed and has empty queue");
             }
 
-            ResultMessage nextMessage = queue.take();
+            ResultMessage nextMessage = pollTheQueue();
             if (nextMessage.isErrorMessage()) {
                 Exception error = ((ErrorResultMessage) nextMessage).error;
                 throw new ServiceException(serviceName, error.getClass().getName() + ": " + error.getMessage());
@@ -98,6 +102,19 @@ public class ReceiveChannel<T> {
             }
         } catch (InterruptedException e) {
             throw new ServiceException(serviceName, "Reading interrupted, " + e.getMessage());
+        }
+    }
+
+    private ResultMessage pollTheQueue() throws InterruptedException {
+        if (readTimeout == 0) {
+            return queue.take();
+        } else {
+            ResultMessage result = queue.poll(readTimeout, TimeUnit.MILLISECONDS);
+            if (result == null) {
+                throw new ServiceException(serviceName,
+                        "Read timeout occurred in receive channel, timeout = " + readTimeout + " ms");
+            }
+            return result;
         }
     }
 
