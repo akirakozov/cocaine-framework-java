@@ -3,9 +3,12 @@ package cocaine;
 import cocaine.unistorage.DataResponse;
 import cocaine.unistorage.FileMetaResponse;
 import cocaine.unistorage.StorageResponse;
+import cocaine.unistorage.errors.StorageErrorType;
+import cocaine.unistorage.errors.StorageResponseError;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
+import org.msgpack.type.ArrayValue;
 import org.msgpack.type.MapValue;
 import org.msgpack.type.ValueFactory;
 import org.msgpack.type.ValueType;
@@ -17,6 +20,7 @@ import java.io.IOException;
  * @author metal
  */
 public class StorageResponseTemplate extends AbstractTemplate<StorageResponse> {
+    private static final String STORAGE_SERVICE_NAME = "unistorage";
 
     private static final Template<StorageResponse> instance = new StorageResponseTemplate();
 
@@ -45,6 +49,11 @@ public class StorageResponseTemplate extends AbstractTemplate<StorageResponse> {
                     mapValue.get(ValueFactory.createRawValue("timestamp_ms")).asIntegerValue().getLong());
         } else if (type == ValueType.RAW) {
             return new DataResponse(unpacker.readByteArray());
+        } else if (type == ValueType.ARRAY) {
+            ArrayValue arrayValue = (ArrayValue) unpacker.readValue();
+
+            StorageErrorType storageErrorType = StorageErrorType.byOrdinal(arrayValue.get(1).asIntegerValue().getInt());
+            throw new StorageResponseError(STORAGE_SERVICE_NAME, storageErrorType);
         } else {
             throw new IllegalArgumentException("Can't parse storage response");
         }

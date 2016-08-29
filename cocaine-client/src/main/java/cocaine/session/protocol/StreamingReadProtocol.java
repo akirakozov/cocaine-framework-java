@@ -17,7 +17,7 @@ public class StreamingReadProtocol implements CocaineProtocol {
     private static final String END = "end";
     private static final String ERROR = "error";
 
-    private static final Set<String> INFORMATIVE_MESSAGES = new HashSet<>(Arrays.asList(META, CHUNK));
+    private static final Set<String> INFORMATIVE_MESSAGES = new HashSet<>(Arrays.asList(META, CHUNK, ERROR));
 
     private static StreamingReadProtocol instance = new StreamingReadProtocol();
 
@@ -38,8 +38,6 @@ public class StreamingReadProtocol implements CocaineProtocol {
             return values.size() == 1 ? values.get(0) : payload;
         } else if (END.equals(messageType)) {
             return null;
-        } else if (ERROR.equals(messageType)) {
-            throw new ServiceException(service, payload.toString());
         } else {
             throw new ProtocolException(service, "Incorrect message type: " + messageType);
         }
