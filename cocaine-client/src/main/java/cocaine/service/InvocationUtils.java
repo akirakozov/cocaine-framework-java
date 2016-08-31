@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class InvocationUtils {
     public static void invoke(Channel channel, long sessionId, int method, List<Object> args) {
-        channel.write(new InvocationRequest(method, sessionId, args));
+        channel.writeAndFlush(new InvocationRequest(method, sessionId, args));
     }
 
     private static class InvocationRequest implements MessagePackable {
