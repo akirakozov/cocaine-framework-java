@@ -98,6 +98,8 @@ public class Service implements  AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        logger.info("Closing service " + toString() + " and it's channel");
+
         if (closed.compareAndSet(false, true)) {
             channel.close();
         }
@@ -112,6 +114,8 @@ public class Service implements  AutoCloseable {
                          final ServiceMessageHandler handler)
     {
         try {
+            logger.info("Service " + name + " connecting to " + endpoint.get());
+
             channel = bootstrap.connect(endpoint.get()).sync().channel();
             channel.pipeline().addLast(handler);
             channel.closeFuture().addListener(new ChannelFutureListener() {
@@ -120,6 +124,8 @@ public class Service implements  AutoCloseable {
                     future.channel().eventLoop().schedule(
                             () -> {
                                 if (!closed.get() && !bootstrap.group().isShuttingDown()) {
+                                    logger.info("Service " + name + " about to reconnect to " + endpoint.get());
+
                                     connect(bootstrap, endpoint, handler);
                                 }
                             }, 2, TimeUnit.SECONDS);
