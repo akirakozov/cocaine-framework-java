@@ -70,7 +70,7 @@ public class Service implements  AutoCloseable {
         return invoke(method, new ValueIdentityPayloadDeserializer(), args);
     }
 
-    public <T> Session<T> invoke(
+    public synchronized <T> Session<T> invoke(
             String method, CocainePayloadDeserializer<T> deserializer, List<Object> args)
     {
         Session<T> session = sessions.create(
