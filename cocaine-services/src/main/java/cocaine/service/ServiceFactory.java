@@ -52,13 +52,17 @@ public class ServiceFactory {
         this.deserializerFactories = ImmutableList.of(new MessagePackDeserializerFactory(msgPack));
     }
 
-    public <T extends AutoCloseable> T createService(Class<T> type, long readTimeout) {
-        Service service = locator.service(getServiceName(type), readTimeout);
+    public <T extends AutoCloseable> T createService(Class<T> type) {
+        return createService(type, 0);
+    }
+
+    public <T extends AutoCloseable> T createService(Class<T> type, long readTimeoutInMs) {
+        Service service = locator.service(getServiceName(type), readTimeoutInMs);
         return create(type, new ServiceMethodHandler(service));
     }
 
-    public <T extends AutoCloseable> T createApp(Class<T> type, long readTimeout) {
-        Service service = locator.service(getServiceName(type), readTimeout);
+    public <T extends AutoCloseable> T createApp(Class<T> type, long readTimeoutInMs) {
+        Service service = locator.service(getServiceName(type), readTimeoutInMs);
         return create(type, new AppServiceMethodHandler(service));
     }
 
