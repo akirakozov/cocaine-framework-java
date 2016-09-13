@@ -19,6 +19,7 @@ import org.msgpack.type.Value;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -27,12 +28,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class Service implements  AutoCloseable {
     private static final Logger logger = Logger.getLogger(Service.class);
+    private static final long DEFAULT_SERVICE_AVAILABILITY_TIMEOUT_IN_MS = 60000;
 
     private final String name;
     private final ServiceApi api;
     private final Sessions sessions;
 
     private AtomicBoolean closed;
+    private volatile CountDownLatch channelLatch = new CountDownLatch(1);
     private Channel channel;
 
     private Service(
@@ -43,7 +46,7 @@ public class Service implements  AutoCloseable {
         this.sessions = new Sessions(name, readTimeout, protocolsRegistry);
         this.api = api;
         this.closed = new AtomicBoolean(false);
-        connect(bootstrap, endpoint, new ServiceMessageHandler(name, sessions));
+        connect(bootstrap, endpoint);
     }
 
     private Service(String name, ServiceApi api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
@@ -70,9 +73,9 @@ public class Service implements  AutoCloseable {
         return invoke(method, new ValueIdentityPayloadDeserializer(), args);
     }
 
-    public synchronized <T> Session<T> invoke(
-            String method, CocainePayloadDeserializer<T> deserializer, List<Object> args)
-    {
+    public <T> Session<T> invoke(String method, CocainePayloadDeserializer<T> deserializer, List<Object> args) {
+        waitForServiceAvailability(Operation.INVOCATION);
+
         Session<T> session = sessions.create(
                 api.getReceiveTree(method),
                 api.getTransmitTree(method),
@@ -110,31 +113,58 @@ public class Service implements  AutoCloseable {
         return name + "/" + channel.remoteAddress();
     }
 
-    private void connect(final Bootstrap bootstrap, final Supplier<SocketAddress> endpoint,
-                         final ServiceMessageHandler handler)
-    {
+    private void connect(final Bootstrap bootstrap, final Supplier<SocketAddress> endpoint) {
         try {
             logger.info("Service " + name + " connecting to " + endpoint.get());
 
-            channel = bootstrap.connect(endpoint.get()).sync().channel();
-            channel.pipeline().addLast(handler);
-            channel.closeFuture().addListener(new ChannelFutureListener() {
+            ChannelFuture connectFuture = bootstrap.connect(endpoint.get());
+            connectFuture.addListener(new ChannelFutureListener() {
                 @Override
-                public void operationComplete(final ChannelFuture future) throws Exception {
-                    future.channel().eventLoop().schedule(
-                            () -> {
-                                if (!closed.get() && !bootstrap.group().isShuttingDown()) {
-                                    logger.info("Service " + name + " about to reconnect to " + endpoint.get());
+                public void operationComplete(ChannelFuture cf) throws Exception {
+                    if (cf.isSuccess()) {
+                        channel = cf.channel();
+                        channelLatch.countDown();
 
-                                    connect(bootstrap, endpoint, handler);
-                                }
-                            }, 2, TimeUnit.SECONDS);
+                        channel.pipeline().addLast(new ServiceMessageHandler(name, sessions));
+                        channel.closeFuture().addListener((ChannelFutureListener) future -> {
+                            if (!closed.get() && !bootstrap.group().isShuttingDown()) {
+                                sessions.onCompleted();
+
+                                channelLatch = new CountDownLatch(1);
+
+                                logger.info("Service " + name + " about to reconnect to " + endpoint.get());
+
+                                new Thread(() -> connect(bootstrap, endpoint)).start();
+                            }
+                        });
+                    } else {
+                        throw new CocaineException("Couldn't connect to " + endpoint.get());
+                    }
                 }
             });
+
+            waitForServiceAvailability(Operation.CONNECTION);
+
+            logger.info("Service " + name + " connected successfully");
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw new CocaineException(e);
         }
+    }
+
+    private void waitForServiceAvailability(Operation operation) {
+        try {
+            if (!channelLatch.await(DEFAULT_SERVICE_AVAILABILITY_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+                throw new CocaineException("Service " + name + " unavailable");
+            }
+        } catch (InterruptedException e) {
+            throw new CocaineException(operation.name().toLowerCase() + " for service " + name
+                    + " interrupted while waiting for connection to arrive");
+        }
+    }
+
+    private enum Operation {
+        CONNECTION, INVOCATION
     }
 
 }
