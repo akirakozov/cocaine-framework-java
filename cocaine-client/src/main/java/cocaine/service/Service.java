@@ -38,35 +38,42 @@ public class Service implements  AutoCloseable {
     private volatile CountDownLatch channelLatch = new CountDownLatch(1);
     private Channel channel;
 
+    private boolean immediatelyFlushAllInvocations;
+
     private Service(
             String name, ServiceApi api, Bootstrap bootstrap,
-            Supplier<SocketAddress> endpoint, long readTimeout, CocaineProtocolsRegistry protocolsRegistry)
+            Supplier<SocketAddress> endpoint, long readTimeout, boolean immediatelyFlushAllInvocations,
+            CocaineProtocolsRegistry protocolsRegistry)
     {
         this.name = name;
         this.sessions = new Sessions(name, readTimeout, protocolsRegistry);
         this.api = api;
         this.closed = new AtomicBoolean(false);
+        this.immediatelyFlushAllInvocations = immediatelyFlushAllInvocations;
         connect(bootstrap, endpoint);
     }
 
     private Service(String name, ServiceApi api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
-            long readTimeout)
+            long readTimeout, boolean immediatelyFlushAllInvocations)
     {
-        this(name, api, bootstrap, endpoint, readTimeout, DefaultCocaineProtocolRegistry.getDefaultRegistry());
+        this(name, api, bootstrap, endpoint, readTimeout, immediatelyFlushAllInvocations,
+                DefaultCocaineProtocolRegistry.getDefaultRegistry());
     }
 
     public static Service create(
-            String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint, long readTimeout,
+            String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
+            long readTimeout, boolean immediatelyFlushAllInvocations,
             ServiceApi api, CocaineProtocolsRegistry protocolsRegistry)
     {
-        return new Service(name, api, bootstrap, endpoint, readTimeout, protocolsRegistry);
+        return new Service(name, api, bootstrap, endpoint, readTimeout, immediatelyFlushAllInvocations,
+                protocolsRegistry);
     }
 
     public static Service create(
             String name, Bootstrap bootstrap,
-            Supplier<SocketAddress> endpoint, long readTimeout, ServiceApi api)
+            Supplier<SocketAddress> endpoint, long readTimeout, boolean immediatelyFlushAllInvocations, ServiceApi api)
     {
-        return new Service(name, api, bootstrap, endpoint, readTimeout);
+        return new Service(name, api, bootstrap, endpoint, readTimeout, immediatelyFlushAllInvocations);
     }
 
     public Session<Value> invoke(String method, List<Object> args) {
@@ -81,7 +88,11 @@ public class Service implements  AutoCloseable {
                 api.getTransmitTree(method),
                 channel,
                 deserializer);
-        InvocationUtils.invoke(channel, session.getId(), api.getMessageId(method), args);
+        if (immediatelyFlushAllInvocations) {
+            InvocationUtils.invokeAndFlush(channel, session.getId(), api.getMessageId(method), args);
+        } else {
+            InvocationUtils.invoke(channel, session.getId(), api.getMessageId(method), args);
+        }
 
         return session;
     }

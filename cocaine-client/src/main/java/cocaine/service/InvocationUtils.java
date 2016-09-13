@@ -2,7 +2,6 @@ package cocaine.service;
 
 import com.google.common.base.Joiner;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import org.apache.log4j.Logger;
 import org.msgpack.MessagePackable;
@@ -19,16 +18,23 @@ public class InvocationUtils {
     private static final Logger logger = Logger.getLogger(InvocationUtils.class);
 
     public static void invoke(Channel channel, long sessionId, int method, List<Object> args) {
-        ChannelFuture channelFuture = channel.writeAndFlush(new InvocationRequest(method, sessionId, args));
+        channel
+                .write(new InvocationRequest(method, sessionId, args))
+                .addListener(errorLoggingListener(sessionId, method));
+    }
 
-        channelFuture.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isDone() && future.cause() != null) {
-                    logger.error("Invoking method " + method + " in session " + sessionId + " failed", future.cause());
-                }
+    public static void invokeAndFlush(Channel channel, long sessionId, int method, List<Object> args) {
+        channel
+                .writeAndFlush(new InvocationRequest(method, sessionId, args))
+                .addListener(errorLoggingListener(sessionId, method));
+    }
+
+    private static ChannelFutureListener errorLoggingListener(long sessionId, int method) {
+        return future -> {
+            if (future.isDone() && future.cause() != null) {
+                logger.error("Invoking method " + method + " in session " + sessionId + " failed", future.cause());
             }
-        });
+        };
     }
 
     private static class InvocationRequest implements MessagePackable {

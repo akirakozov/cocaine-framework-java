@@ -64,7 +64,7 @@ public final class Locator implements AutoCloseable {
                 });
 
         ServiceApi locatorApi = createLocatorApi();
-        this.service = Service.create("locator", bootstrap, Suppliers.ofInstance(endpoint), 0, locatorApi);
+        this.service = Service.create("locator", bootstrap, Suppliers.ofInstance(endpoint), 0, false, locatorApi);
     }
 
     public static Locator create() {
@@ -80,12 +80,14 @@ public final class Locator implements AutoCloseable {
         return new Locator(endpoint, pack);
     }
 
-    public Service service(final String name, final long readTimeout) {
-        return createService(name, readTimeout, Optional.empty());
+    public Service service(final String name, final long readTimeout, final boolean immediatelyFlushAllInvocations) {
+        return createService(name, readTimeout, immediatelyFlushAllInvocations, Optional.empty());
     }
 
-    public Service service(final String name, final long readTimeout, final CocaineProtocolsRegistry registry) {
-        return createService(name, readTimeout, Optional.of(registry));
+    public Service service(final String name, final long readTimeout, final CocaineProtocolsRegistry registry,
+            final boolean immediatelyFlushAllInvocations)
+    {
+        return createService(name, readTimeout, immediatelyFlushAllInvocations, Optional.of(registry));
     }
 
 
@@ -95,7 +97,8 @@ public final class Locator implements AutoCloseable {
         eventLoop.shutdownGracefully();
     }
 
-    private Service createService(final String name, final long readTimeout,
+    private Service createService(final String name,
+            final long readTimeout, final boolean immediatelyFlushAllInvocations,
             final Optional<CocaineProtocolsRegistry> registry)
     {
         logger.info("Creating service " + name);
@@ -103,9 +106,10 @@ public final class Locator implements AutoCloseable {
         ServiceInfo info = resolve(name);
         if (registry.isPresent()) {
             return Service.create(name, bootstrap,
-                    () -> info.getEndpoints().get(0), readTimeout, info.getApi(), registry.get());
+                    () -> info.getEndpoints().get(0), readTimeout, immediatelyFlushAllInvocations, info.getApi(), registry.get());
         } else {
-            return Service.create(name, bootstrap, () -> info.getEndpoints().get(0), readTimeout, info.getApi());
+            return Service.create(name, bootstrap,
+                    () -> info.getEndpoints().get(0), readTimeout, immediatelyFlushAllInvocations, info.getApi());
         }
     }
 

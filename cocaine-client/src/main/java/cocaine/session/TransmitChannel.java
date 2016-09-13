@@ -35,7 +35,7 @@ public class TransmitChannel {
 
         int msgId = txTree.getMessageId(methodType)
                 .orElseThrow(() -> new UnknownServiceMethodException(serviceName, methodType));
-        InvocationUtils.invoke(channel, sessionId, msgId, args);
+        InvocationUtils.invokeAndFlush(channel, sessionId, msgId, args);
         TransactionTree.TransactionInfo info = txTree.getInfo(methodType)
                 .orElseThrow(() -> new UnknownServiceMethodException(serviceName, methodType));
         if (!info.getTree().isCycle()) {
