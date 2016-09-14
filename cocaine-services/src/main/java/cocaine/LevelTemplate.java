@@ -23,13 +23,13 @@ public class LevelTemplate extends AbstractTemplate<Level> {
 
     @Override
     public void write(Packer packer, Level level, boolean required) throws IOException {
-        if (level == Level.DEBUG) {
+        if (Level.DEBUG.equals(level)) {
             packer.write(0);
-        } else if (level == Level.INFO) {
+        } else if (Level.INFO.equals(level)) {
             packer.write(1);
-        } else if (level == Level.WARN) {
+        } else if (Level.WARN.equals(level)) {
             packer.write(2);
-        } else if (level == Level.ERROR) {
+        } else if (Level.ERROR.equals(level)) {
             packer.write(3);
         } else {
             throw new IllegalArgumentException("Unsupported level: " + level
@@ -37,7 +37,7 @@ public class LevelTemplate extends AbstractTemplate<Level> {
                     + ", code: " + level.toInt()
                     + ", hash code: " + Integer.toHexString(level.hashCode())
                     + ", info code:" + Level.INFO.toInt()
-                    + ", info code:" + Integer.toHexString(Level.INFO.hashCode()));
+                    + ", info hash code:" + Integer.toHexString(Level.INFO.hashCode()));
         }
     }
 
