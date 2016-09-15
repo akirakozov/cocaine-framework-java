@@ -126,10 +126,16 @@ public class Service implements  AutoCloseable {
 
     private void connect(final Bootstrap bootstrap, final Supplier<SocketAddress> endpoint) {
         try {
+            System.out.println("[debugging_reconnection] Trying to connect to " + name);
+
             ChannelFuture connectFuture = bootstrap.connect(endpoint.get());
+            System.out.println("[debugging_reconnection] Getting connect future for " + name);
+
             connectFuture.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture cf) throws Exception {
+                    System.out.println("[debugging_reconnection] In connectFuture.operationComplete for " + name);
+
                     if (cf.isSuccess()) {
                         channel = cf.channel();
                         channelLatch.countDown();
@@ -143,15 +149,21 @@ public class Service implements  AutoCloseable {
                             }
                         });
                     } else {
+                        System.out.println("[debugging_reconnection] Failed to connect to " + name);
                         throw new CocaineException("Couldn't connect to " + endpoint.get());
                     }
                 }
             });
 
+            System.out.println("[debugging_reconnection] Waiting for connection to " + name);
             waitForServiceAvailability(Operation.CONNECTION);
 
+            System.out.println("[debugging_reconnection] Service " + name + " connected");
             logger.info("Service " + name + " connected successfully");
         } catch (Exception e) {
+            System.out.println("[debugging_reconnection] Exception caught for " + name);
+            System.out.println("[debugging_reconnection] " + e.getClass().toString() + ":" + e.getMessage());
+            e.printStackTrace();
             throw new CocaineException(e);
         }
     }
