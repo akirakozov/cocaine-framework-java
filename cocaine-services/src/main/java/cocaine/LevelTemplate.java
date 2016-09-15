@@ -32,12 +32,7 @@ public class LevelTemplate extends AbstractTemplate<Level> {
         } else if (Level.ERROR.equals(level)) {
             packer.write(3);
         } else {
-            throw new IllegalArgumentException("Unsupported level: " + level
-                    + ", class: " + level.getClass()
-                    + ", code: " + level.toInt()
-                    + ", hash code: " + Integer.toHexString(level.hashCode())
-                    + ", info code:" + Level.INFO.toInt()
-                    + ", info hash code:" + Integer.toHexString(Level.INFO.hashCode()));
+            throw new IllegalArgumentException("Unsupported level: " + level);
         }
     }
 
