@@ -126,8 +126,6 @@ public class Service implements  AutoCloseable {
 
     private void connect(final Bootstrap bootstrap, final Supplier<SocketAddress> endpoint) {
         try {
-            logger.info("Service " + name + " connecting to " + endpoint.get());
-
             ChannelFuture connectFuture = bootstrap.connect(endpoint.get());
             connectFuture.addListener(new ChannelFutureListener() {
                 @Override
@@ -140,11 +138,7 @@ public class Service implements  AutoCloseable {
                         channel.closeFuture().addListener((ChannelFutureListener) future -> {
                             if (!closed.get() && !bootstrap.group().isShuttingDown()) {
                                 sessions.onCompleted();
-
                                 channelLatch = new CountDownLatch(1);
-
-                                logger.info("Service " + name + " about to reconnect to " + endpoint.get());
-
                                 new Thread(() -> connect(bootstrap, endpoint)).start();
                             }
                         });
