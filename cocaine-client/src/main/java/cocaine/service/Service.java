@@ -152,7 +152,6 @@ public class Service implements  AutoCloseable {
 
             logger.info("Service " + name + " connected successfully");
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
             throw new CocaineException(e);
         }
     }
