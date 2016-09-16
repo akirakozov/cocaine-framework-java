@@ -3,6 +3,7 @@ package cocaine.service;
 import cocaine.CocaineException;
 import cocaine.api.ServiceApi;
 import cocaine.api.TransactionTree;
+import cocaine.locator.Locator;
 import cocaine.netty.ServiceMessageHandler;
 import cocaine.session.*;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
@@ -10,9 +11,7 @@ import cocaine.session.protocol.DefaultCocaineProtocolRegistry;
 import cocaine.session.protocol.PrimitiveProtocol;
 import com.google.common.base.Supplier;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.*;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
 
@@ -34,6 +33,9 @@ public class Service implements  AutoCloseable {
     private final ServiceApi api;
     private final Sessions sessions;
 
+    private final EventLoopGroup eventLoopGroup;
+    private final ChannelInitializer<Channel> channelInitializer;
+
     private AtomicBoolean closed;
     private volatile CountDownLatch channelLatch = new CountDownLatch(1);
     private Channel channel;
@@ -41,39 +43,49 @@ public class Service implements  AutoCloseable {
     private boolean immediatelyFlushAllInvocations;
 
     private Service(
-            String name, ServiceApi api, Bootstrap bootstrap,
+            String name, ServiceApi api, EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer,
             Supplier<SocketAddress> endpoint, long readTimeout, boolean immediatelyFlushAllInvocations,
             CocaineProtocolsRegistry protocolsRegistry)
     {
         this.name = name;
         this.sessions = new Sessions(name, readTimeout, protocolsRegistry);
         this.api = api;
+
+        this.eventLoopGroup = eventLoopGroup;
+        this.channelInitializer = channelInitializer;
+
         this.closed = new AtomicBoolean(false);
         this.immediatelyFlushAllInvocations = immediatelyFlushAllInvocations;
-        connect(bootstrap, endpoint);
+
+        connect(eventLoopGroup, channelInitializer, endpoint);
     }
 
-    private Service(String name, ServiceApi api, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
+    private Service(String name, ServiceApi api,
+            EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer, Supplier<SocketAddress> endpoint,
             long readTimeout, boolean immediatelyFlushAllInvocations)
     {
-        this(name, api, bootstrap, endpoint, readTimeout, immediatelyFlushAllInvocations,
+        this(name, api, eventLoopGroup, channelInitializer, endpoint,
+                readTimeout, immediatelyFlushAllInvocations,
                 DefaultCocaineProtocolRegistry.getDefaultRegistry());
     }
 
     public static Service create(
-            String name, Bootstrap bootstrap, Supplier<SocketAddress> endpoint,
+            String name,
+            EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer, Supplier<SocketAddress> endpoint,
             long readTimeout, boolean immediatelyFlushAllInvocations,
             ServiceApi api, CocaineProtocolsRegistry protocolsRegistry)
     {
-        return new Service(name, api, bootstrap, endpoint, readTimeout, immediatelyFlushAllInvocations,
+        return new Service(name, api, eventLoopGroup, channelInitializer, endpoint,
+                readTimeout, immediatelyFlushAllInvocations,
                 protocolsRegistry);
     }
 
     public static Service create(
-            String name, Bootstrap bootstrap,
+            String name, EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer,
             Supplier<SocketAddress> endpoint, long readTimeout, boolean immediatelyFlushAllInvocations, ServiceApi api)
     {
-        return new Service(name, api, bootstrap, endpoint, readTimeout, immediatelyFlushAllInvocations);
+        return new Service(name, api, eventLoopGroup, channelInitializer, endpoint,
+                readTimeout, immediatelyFlushAllInvocations);
     }
 
     public Session<Value> invoke(String method, List<Object> args) {
@@ -124,18 +136,16 @@ public class Service implements  AutoCloseable {
         return name + "/" + channel.remoteAddress();
     }
 
-    private void connect(final Bootstrap bootstrap, final Supplier<SocketAddress> endpoint) {
+    private void connect(final EventLoopGroup eventLoopGroup, final ChannelInitializer<Channel> channelInitializer,
+            final Supplier<SocketAddress> endpoint)
+    {
         try {
-            System.out.println("[debugging_reconnection] Trying to connect to " + name);
-
+            Bootstrap bootstrap = Locator.createBootstrap(eventLoopGroup, channelInitializer);
             ChannelFuture connectFuture = bootstrap.connect(endpoint.get());
-            System.out.println("[debugging_reconnection] Getting connect future for " + name);
 
             connectFuture.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture cf) throws Exception {
-                    System.out.println("[debugging_reconnection] In connectFuture.operationComplete for " + name);
-
                     if (cf.isSuccess()) {
                         channel = cf.channel();
                         channelLatch.countDown();
@@ -145,25 +155,19 @@ public class Service implements  AutoCloseable {
                             if (!closed.get() && !bootstrap.group().isShuttingDown()) {
                                 sessions.onCompleted();
                                 channelLatch = new CountDownLatch(1);
-                                new Thread(() -> connect(bootstrap, endpoint)).start();
+                                new Thread(() -> connect(eventLoopGroup, channelInitializer, endpoint)).start();
                             }
                         });
                     } else {
-                        System.out.println("[debugging_reconnection] Failed to connect to " + name);
                         throw new CocaineException("Couldn't connect to " + endpoint.get());
                     }
                 }
             });
 
-            System.out.println("[debugging_reconnection] Waiting for connection to " + name);
             waitForServiceAvailability(Operation.CONNECTION);
 
-            System.out.println("[debugging_reconnection] Service " + name + " connected");
             logger.info("Service " + name + " connected successfully");
         } catch (Exception e) {
-            System.out.println("[debugging_reconnection] Exception caught for " + name);
-            System.out.println("[debugging_reconnection] " + e.getClass().toString() + ":" + e.getMessage());
-            e.printStackTrace();
             throw new CocaineException(e);
         }
     }

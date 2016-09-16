@@ -17,6 +17,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.EventExecutorGroup;
 import org.apache.log4j.Logger;
 import org.msgpack.MessagePack;
 import org.msgpack.type.Value;
@@ -24,10 +25,7 @@ import org.msgpack.unpacker.Converter;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,15 +37,23 @@ public final class Locator implements AutoCloseable {
     private static final Logger logger = Logger.getLogger(Locator.class);
 
     private final SocketAddress endpoint;
-    private final EventLoopGroup eventLoop;
-    private final Bootstrap bootstrap;
+    private final MessagePack pack;
+    private final List<EventLoopGroup> eventLoops;
     private final Service service;
 
     private Locator(SocketAddress endpoint, MessagePack pack) {
         this.endpoint = endpoint;
-        this.eventLoop = new NioEventLoopGroup(1);
-        this.bootstrap = new Bootstrap()
-                .group(eventLoop)
+        this.pack = pack;
+        this.eventLoops = new ArrayList<>();
+
+        this.service = Service.create("locator", createSeparateEventLoop(), createChannelInitializer(pack),
+                Suppliers.ofInstance(endpoint), 0, false, createLocatorApi());
+    }
+
+    public static Bootstrap createBootstrap(EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer)
+    {
+        return new Bootstrap()
+                .group(eventLoopGroup)
 
                 .channel(NioSocketChannel.class)
 
@@ -55,16 +61,7 @@ public final class Locator implements AutoCloseable {
                 .option(ChannelOption.TCP_NODELAY, true)
                 .option(ChannelOption.SO_KEEPALIVE, true)
 
-                .handler(new ChannelInitializer<Channel>() {
-                    public void initChannel(Channel channel) {
-                        channel.pipeline()
-                                .addLast("Message Decoder", new MessageDecoder(pack))
-                                .addLast("Message Packable Encoder", new MessagePackableEncoder(pack));
-                    }
-                });
-
-        ServiceApi locatorApi = createLocatorApi();
-        this.service = Service.create("locator", bootstrap, Suppliers.ofInstance(endpoint), 0, false, locatorApi);
+                .handler(channelInitializer);
     }
 
     public static Locator create() {
@@ -90,11 +87,26 @@ public final class Locator implements AutoCloseable {
         return createService(name, readTimeout, immediatelyFlushAllInvocations, Optional.of(registry));
     }
 
-
     @Override
     public void close() {
         logger.info("Shutting down locator");
-        eventLoop.shutdownGracefully();
+        eventLoops.forEach(EventExecutorGroup::shutdownGracefully);
+    }
+
+    private static ChannelInitializer<Channel> createChannelInitializer(final MessagePack pack) {
+        return new ChannelInitializer<Channel>() {
+            public void initChannel(Channel channel) {
+                channel.pipeline()
+                        .addLast("Message Decoder", new MessageDecoder(pack))
+                        .addLast("Message Packable Encoder", new MessagePackableEncoder(pack));
+            }
+        };
+    }
+
+    private EventLoopGroup createSeparateEventLoop() {
+        EventLoopGroup eventLoop = new NioEventLoopGroup(1);
+        eventLoops.add(eventLoop);
+        return eventLoop;
     }
 
     private Service createService(final String name,
@@ -105,10 +117,10 @@ public final class Locator implements AutoCloseable {
         // TODO: use all endpoints instead of only first
         ServiceInfo info = resolve(name);
         if (registry.isPresent()) {
-            return Service.create(name, bootstrap,
+            return Service.create(name, createSeparateEventLoop(), createChannelInitializer(pack),
                     () -> info.getEndpoints().get(0), readTimeout, immediatelyFlushAllInvocations, info.getApi(), registry.get());
         } else {
-            return Service.create(name, bootstrap,
+            return Service.create(name, createSeparateEventLoop(), createChannelInitializer(pack),
                     () -> info.getEndpoints().get(0), readTimeout, immediatelyFlushAllInvocations, info.getApi());
         }
     }
