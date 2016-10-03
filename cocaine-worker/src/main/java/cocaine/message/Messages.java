@@ -1,5 +1,6 @@
 package cocaine.message;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -19,20 +20,20 @@ public final class Messages {
         return new TerminateMessage(reason, message);
     }
 
-    public static WorkerMessage invoke(long session, String event) {
-        return new InvokeMessage(session, event);
+    public static WorkerMessage invoke(long session, List<List<Object>> headers, String event) {
+        return new InvokeMessage(session, headers, event);
     }
 
-    public static WorkerMessage write(long session, byte[] data) {
-        return new WriteMessage(session, data);
+    public static WorkerMessage write(long session, byte[] data, List<List<Object>> headers) {
+        return new WriteMessage(session, data, headers);
     }
 
-    public static WorkerMessage close(long session) {
-        return new CloseMessage(session);
+    public static WorkerMessage close(long session, List<List<Object>> headers) {
+        return new CloseMessage(session, headers);
     }
 
-    public static WorkerMessage error(long session, int category, int code, String message) {
-        return new ErrorMessage(session, category, code, message);
+    public static WorkerMessage error(long session, List<List<Object>> headers, int category, int code, String message) {
+        return new ErrorMessage(session, headers, category, code, message);
     }
 
     private Messages() { }

@@ -1,6 +1,7 @@
 package cocaine;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,10 +28,10 @@ final class WorkerSessions {
         this.sessions = new ConcurrentHashMap<>();
     }
 
-    public Session create(long id) {
+    public Session create(long id, List<List<Object>> headers) {
         Subject<byte[], byte[]> input = ReplaySubject.create();
         Subject<byte[], byte[]> output = PublishSubject.create();
-        output.subscribe(new Writer(id, worker));
+        output.subscribe(new Writer(id, headers, worker));
 
         logger.debug("Creating new session: " + id);
         Session session = new Session(id, input, output);
@@ -110,26 +111,29 @@ final class WorkerSessions {
     private static final class Writer implements Observer<byte[]> {
 
         private final long session;
+        private final List<List<Object>> headers;
         private final Worker worker;
 
-        public Writer(long session, Worker worker) {
+        public Writer(long session, List<List<Object>> headers, Worker worker) {
             this.session = session;
+            this.headers = headers;
             this.worker = worker;
         }
 
         @Override
         public void onCompleted() {
-            this.worker.sendChoke(session);
+            this.worker.sendChoke(session, headers);
         }
 
         @Override
         public void onError(Throwable error) {
-            this.worker.sendError(session, ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.EINVFAILED, error.getMessage());
+            this.worker.sendError(session, headers,
+                    ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.EINVFAILED, error.getMessage());
         }
 
         @Override
         public void onNext(byte[] bytes) {
-            this.worker.sendChunk(session, bytes);
+            this.worker.sendChunk(session, bytes, headers);
         }
     }
 }

@@ -22,7 +22,7 @@ public final class WorkerMessageTemplate extends AbstractTemplate<WorkerMessage>
 
     @Override
     public void write(Packer packer, WorkerMessage message, boolean required) throws IOException {
-        packer.writeArrayBegin(3);
+        packer.writeArrayBegin(message.getHeaders().isEmpty() ? 3 : 4);
         packer.write(message.getSession());
         packer.write(message.getType().value());
 
@@ -73,6 +73,10 @@ public final class WorkerMessageTemplate extends AbstractTemplate<WorkerMessage>
                 packer.writeArrayEnd();
                 break;
             }
+        }
+
+        if (!message.getHeaders().isEmpty()) {
+            packer.write(message.getHeaders());
         }
 
         packer.writeArrayEnd();

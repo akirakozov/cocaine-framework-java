@@ -142,23 +142,23 @@ public class Worker implements AutoCloseable {
             maxSession = msg.getSession();
             if (msg.getType() == MessageType.INVOKE.value()) {
                 String event = msg.getPayload().asArrayValue().get(0).asRawValue().getString();
-                return Optional.of(Messages.invoke(msg.getSession(), event));
+                return Optional.of(Messages.invoke(msg.getSession(), msg.getHeaders(), event));
             }
             return Optional.empty();
         }
 
         if (msg.getType() == MessageType.WRITE.value()) {
             byte[] data = msg.getPayload().asArrayValue().get(0).asRawValue().getByteArray();
-            return Optional.of(Messages.write(msg.getSession(), data));
+            return Optional.of(Messages.write(msg.getSession(), data, msg.getHeaders()));
         } else if (msg.getType() == MessageType.CLOSE.value()) {
-            return Optional.of(Messages.close(msg.getSession()));
+            return Optional.of(Messages.close(msg.getSession(), msg.getHeaders()));
         } else if (msg.getType() == MessageType.ERROR.value()) {
             ArrayValue values = msg.getPayload().asArrayValue();
             ArrayValue errCodes = values.get(0).asArrayValue();
             int category = errCodes.get(0).asIntegerValue().getInt();
             int error = errCodes.get(1).asIntegerValue().getInt();
             String errMsg = values.size() == 2 ? values.get(1).asRawValue().getString() : "";
-            return Optional.of(Messages.error(msg.getSession(), category, error, errMsg));
+            return Optional.of(Messages.error(msg.getSession(), msg.getHeaders(), category, error, errMsg));
         }
 
         return Optional.empty();
@@ -178,18 +178,20 @@ public class Worker implements AutoCloseable {
 
     private void dispatchInvoke(InvokeMessage msg) {
         logger.debug("Invoke has been received " + msg);
-        WorkerSessions.Session session = this.sessions.create(msg.getSession());
+        WorkerSessions.Session session = this.sessions.create(msg.getSession(), msg.getHeaders());
 
         String event = msg.getEvent();
         try {
-            this.invoker.invoke(event, session.getInput(), session.getOutput());
+            this.invoker.invoke(event, msg.getHeaders(), session.getInput(), session.getOutput());
         } catch (UnknownClientMethodException e) {
             logger.warn("No handler for '" + event + "' event is registered");
-            write(Messages.error(msg.getSession(), ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.ENOHANDLER,
+            write(Messages.error(msg.getSession(), msg.getHeaders(),
+                    ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.ENOHANDLER,
                     "No handler for '" + event + "' event is registered"));
         } catch (Exception e) {
             logger.error("Invocation failed: " + e.getMessage());
-            write(Messages.error(msg.getSession(), ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.EINVFAILED,
+            write(Messages.error(msg.getSession(), msg.getHeaders(),
+                    ErrorMessage.Category.FRAMEWORK, ErrorMessage.Code.EINVFAILED,
                     "Invocation failed: " + e.getMessage()));
         }
     }
@@ -225,16 +227,16 @@ public class Worker implements AutoCloseable {
         logger.debug("Heartbeat has been sent. Start disown timer");
     }
 
-    void sendChoke(long session) {
-        this.write(Messages.close(session));
+    void sendChoke(long session, List<List<Object>> headers) {
+        this.write(Messages.close(session, headers));
     }
 
-    void sendChunk(long session, byte[] data) {
-        this.write(Messages.write(session, data));
+    void sendChunk(long session, byte[] data, List<List<Object>> headers) {
+        this.write(Messages.write(session, data, headers));
     }
 
-    void sendError(long session, int category, int code, String message) {
-        this.write(Messages.error(session, category, code, message));
+    void sendError(long session, List<List<Object>> headers, int category, int code, String message) {
+        this.write(Messages.error(session, headers, category, code, message));
     }
 
     private void write(WorkerMessage message) {

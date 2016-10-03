@@ -2,6 +2,8 @@ package cocaine.message;
 
 import com.google.common.base.Preconditions;
 
+import java.util.List;
+
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  * @author akirakozov
@@ -30,8 +32,8 @@ public final class ErrorMessage extends WorkerMessage {
     private final int category;
     private final String message;
 
-    public ErrorMessage(long session, int category, int code, String message) {
-        super(MessageType.ERROR, session);
+    public ErrorMessage(long session, List<List<Object>> headers, int category, int code, String message) {
+        super(MessageType.ERROR, session, headers);
         this.code = code;
         this.category = category;
         this.message = Preconditions.checkNotNull(message, "Error message can not be null");

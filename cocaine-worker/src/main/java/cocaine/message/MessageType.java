@@ -1,11 +1,5 @@
 package cocaine.message;
 
-import java.util.Arrays;
-import java.util.Map;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Maps;
-
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */

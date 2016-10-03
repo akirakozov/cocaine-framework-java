@@ -2,6 +2,8 @@ package cocaine.message;
 
 import com.google.common.base.Preconditions;
 
+import java.util.List;
+
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
@@ -9,8 +11,8 @@ public final class InvokeMessage extends WorkerMessage {
 
     private final String event;
 
-    public InvokeMessage(long session, String event) {
-        super(MessageType.INVOKE, session);
+    public InvokeMessage(long session, List<List<Object>> headers, String event) {
+        super(MessageType.INVOKE, session, headers);
         this.event = Preconditions.checkNotNull(event, "Event can not be null");
     }
 

@@ -1,5 +1,8 @@
 package cocaine.message;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
@@ -9,14 +12,16 @@ public abstract class WorkerMessage {
 
     private final MessageType type;
     private final long session;
+    private final List<List<Object>> headers;
 
-    protected WorkerMessage(MessageType type, long session) {
+    protected WorkerMessage(MessageType type, long session, List<List<Object>> headers) {
         this.type = type;
         this.session = session;
+        this.headers = headers;
     }
 
     protected WorkerMessage(MessageType type) {
-        this(type, SYSTEM_SESSION);
+        this(type, SYSTEM_SESSION, new ArrayList<>());
     }
 
     public MessageType getType() {
@@ -25,6 +30,10 @@ public abstract class WorkerMessage {
 
     public long getSession() {
         return session;
+    }
+
+    public List<List<Object>> getHeaders() {
+        return headers;
     }
 
     @Override

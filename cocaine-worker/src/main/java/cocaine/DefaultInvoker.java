@@ -1,8 +1,10 @@
 package cocaine;
 
+import cocaine.request.RequestIdStack;
 import rx.Observable;
 import rx.Observer;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,10 +18,15 @@ public class DefaultInvoker implements Invoker {
     }
 
     @Override
-    public void invoke(String event, Observable<byte[]> request, Observer<byte[]> response) throws Exception {
+    public void invoke(String event, List<List<Object>> headers, Observable<byte[]> request, Observer<byte[]> response) throws Exception {
         EventHandler handler = provider.getHandler(event);
         if (handler != null) {
-            handler.handle(request, response);
+            try {
+                headers.forEach(RequestIdStack::pushReplaceId);
+                handler.handle(request, response);
+            } finally {
+                RequestIdStack.pop();
+            }
         } else {
             throw new UnknownClientMethodException(event);
         }

@@ -1,9 +1,7 @@
 package cocaine.message;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -59,8 +57,13 @@ public class WorkerMessageTemplateTest {
     public void writeInvokeMessage() throws IOException {
         long session = 1L;
         String method = "invoke";
-        WorkerMessage msg = Messages.invoke(session, method);
-        byte[] bytes = pack.write(Arrays.asList(session, 0, Arrays.asList(method)));
+        List<List<Object>> headers = new ArrayList<>();
+        headers.add(Arrays.asList(80));
+        headers.add(Arrays.asList(false, 81, "reqreqid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+
+        WorkerMessage msg = Messages.invoke(session, headers, method);
+        byte[] bytes = pack.write(Arrays.asList(session, 0, Arrays.asList(method), headers));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
@@ -71,8 +74,13 @@ public class WorkerMessageTemplateTest {
     public void writeWriteMessage() throws IOException {
         long session = 1L;
         byte[] data = new byte[] { 1, 2, 3, 4, 5 };
-        WorkerMessage msg = Messages.write(session, data);
-        byte[] bytes = pack.write(Arrays.asList(session, 0, Collections.singletonList(data)));
+        List<List<Object>> headers = new ArrayList<>();
+        headers.add(Arrays.asList(80));
+        headers.add(Arrays.asList(false, 81, "reqreqid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+
+        WorkerMessage msg = Messages.write(session, data, headers);
+        byte[] bytes = pack.write(Arrays.asList(session, 0, Collections.singletonList(data), headers));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
@@ -82,11 +90,17 @@ public class WorkerMessageTemplateTest {
     @Test
     public void writeErrorMessage() throws IOException {
         long session = 1L;
+        List<List<Object>> headers = new ArrayList<>();
+        headers.add(Arrays.asList(80));
+        headers.add(Arrays.asList(false, 81, "reqreqid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+
         int category = 1;
         int code = -200;
         String message = "Failed!";
-        WorkerMessage msg = Messages.error(session, category, code, message);
-        byte[] bytes = pack.write(Arrays.asList(session, 1, Arrays.asList(Arrays.asList(category, code), message)));
+
+        WorkerMessage msg = Messages.error(session, headers, category, code, message);
+        byte[] bytes = pack.write(Arrays.asList(session, 1, Arrays.asList(Arrays.asList(category, code), message), headers));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
@@ -96,8 +110,13 @@ public class WorkerMessageTemplateTest {
     @Test
     public void writeCloseMessage() throws IOException {
         long session = 1L;
-        WorkerMessage msg = Messages.close(session);
-        byte[] bytes = pack.write(Arrays.asList(session, 2, Arrays.asList()));
+        List<List<Object>> headers = new ArrayList<>();
+        headers.add(Arrays.asList(80));
+        headers.add(Arrays.asList(false, 81, "reqreqid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+
+        WorkerMessage msg = Messages.close(session, headers);
+        byte[] bytes = pack.write(Arrays.asList(session, 2, Arrays.asList(), headers));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
