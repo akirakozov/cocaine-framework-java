@@ -4,7 +4,9 @@ import cocaine.message.Message;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
+import org.msgpack.type.ArrayValue;
 import org.msgpack.type.Value;
+import org.msgpack.type.ValueType;
 import org.msgpack.unpacker.Unpacker;
 
 import java.io.IOException;
@@ -50,11 +52,15 @@ public final class MessageTemplate<T> extends AbstractTemplate<Message> {
             for (int i = 0; i < count; i++) {
                 List<Object> header = new ArrayList<>();
 
-                int headerLength = unpacker.readArrayBegin();
-                for (int j = 0; j < headerLength; j++) {
-                    header.add(readHeaderPart(unpacker));
+                Value headerValue = unpacker.readValue();
+                if (headerValue.getType() == ValueType.INTEGER) {
+                    header.add(headerValue.asIntegerValue().getInt());
+                } else {
+                    ArrayValue array = headerValue.asArrayValue();
+                    for (Value part : array) {
+                        header.add(readHeaderPart(part));
+                    }
                 }
-                unpacker.readArrayEnd();
 
                 headers.add(header);
             }
@@ -67,17 +73,16 @@ public final class MessageTemplate<T> extends AbstractTemplate<Message> {
         return new Message(messageType, session, payload, headers);
     }
 
-    private Object readHeaderPart(Unpacker unpacker) throws IOException {
-        Value value = unpacker.readValue();
-        switch (value.getType()) {
+    private Object readHeaderPart(Value part) throws IOException {
+        switch (part.getType()) {
             case BOOLEAN:
-                return value.asBooleanValue().getBoolean();
+                return part.asBooleanValue().getBoolean();
             case INTEGER:
-                return value.asIntegerValue().getInt();
+                return part.asIntegerValue().getInt();
             case RAW:
-                return value.asRawValue().toString();
+                return part.asRawValue().toString();
             default:
-                return value.toString();
+                return part.toString();
         }
     }
 
