@@ -28,9 +28,9 @@ public class MessageTemplateTest {
         long session = 1;
         int messageType = 0;
         List<List<Object>> headers = new ArrayList<>();
-        headers.add(Arrays.asList(80));
-        headers.add(Arrays.asList(false, 81, "reqreqid"));
-        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracerid"));
+        headers.add(Arrays.asList(false, 81, "spanrid"));
+        headers.add(Arrays.asList(false, 82, "parentid"));
 
         byte[] bytes = pack.write(Arrays.asList(session, messageType, true, headers));
         byte[] result = pack.write(new Message(messageType, session, ValueFactory.createBooleanValue(true), headers),
@@ -40,16 +40,21 @@ public class MessageTemplateTest {
 
     @Test
     public void writeReadMessageV12() throws IOException {
-        List<List<Object>> headers = new ArrayList<>();
-        headers.add(Arrays.asList(80));
-        headers.add(Arrays.asList(false, 81, "reqreqid"));
-        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+        List<Object> headers = new ArrayList<>();
+        headers.add(80);
+        headers.add(Arrays.asList(false, 81, "spanrid"));
+        headers.add(Arrays.asList(false, 82, "parentid"));
 
-        Message message = new Message(1, 0, ValueFactory.createBooleanValue(true), headers);
-        byte[] bytes = pack.write(message, MessageTemplate.getInstance());
+        byte[] bytes = pack.write(Arrays.asList(1, 0, true, headers));
         Message result = pack.read(bytes, MessageTemplate.getInstance());
 
-        Assert.assertEquals(message, result);
+        byte[] bytes2 = pack.write(result, MessageTemplate.getInstance());
+        Message result2 = pack.read(bytes2, MessageTemplate.getInstance());
+
+        Assert.assertEquals(result, result2);
+
+        Message message = new Message(0, 1, ValueFactory.createBooleanValue(true), new ArrayList<>());
+        Assert.assertEquals(result, message);
     }
 
 }

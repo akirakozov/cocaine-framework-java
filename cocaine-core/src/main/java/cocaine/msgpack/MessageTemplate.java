@@ -1,6 +1,7 @@
 package cocaine.msgpack;
 
 import cocaine.message.Message;
+import cocaine.request.RequestIdStack;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
@@ -48,23 +49,20 @@ public final class MessageTemplate<T> extends AbstractTemplate<Message> {
         List<List<Object>> headers = new ArrayList<>();
         if (size == 4) {
             int count = unpacker.readArrayBegin();
-
             for (int i = 0; i < count; i++) {
-                List<Object> header = new ArrayList<>();
-
                 Value headerValue = unpacker.readValue();
-                if (headerValue.getType() == ValueType.INTEGER) {
-                    header.add(headerValue.asIntegerValue().getInt());
-                } else {
+                if (headerValue.getType() != ValueType.INTEGER) {
+                    List<Object> header = new ArrayList<>();
                     ArrayValue array = headerValue.asArrayValue();
                     for (Value part : array) {
                         header.add(readHeaderPart(part));
                     }
+                    headers.add(header);
                 }
-
-                headers.add(header);
             }
-
+            if (headers.size() != RequestIdStack.AVAILABLE_IDS.size()) {
+                headers.clear();
+            }
             unpacker.readArrayEnd();
         }
 
@@ -80,7 +78,7 @@ public final class MessageTemplate<T> extends AbstractTemplate<Message> {
             case INTEGER:
                 return part.asIntegerValue().getInt();
             case RAW:
-                return part.asRawValue().toString();
+                return part.asRawValue().getString();
             default:
                 return part.toString();
         }

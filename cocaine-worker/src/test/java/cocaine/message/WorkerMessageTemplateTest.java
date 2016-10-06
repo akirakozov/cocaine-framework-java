@@ -58,9 +58,9 @@ public class WorkerMessageTemplateTest {
         long session = 1L;
         String method = "invoke";
         List<List<Object>> headers = new ArrayList<>();
-        headers.add(Arrays.asList(80));
-        headers.add(Arrays.asList(false, 81, "reqreqid"));
-        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracerid"));
+        headers.add(Arrays.asList(false, 81, "spanrid"));
+        headers.add(Arrays.asList(false, 82, "parentid"));
 
         WorkerMessage msg = Messages.invoke(session, headers, method);
         byte[] bytes = pack.write(Arrays.asList(session, 0, Arrays.asList(method), headers));
@@ -75,9 +75,9 @@ public class WorkerMessageTemplateTest {
         long session = 1L;
         byte[] data = new byte[] { 1, 2, 3, 4, 5 };
         List<List<Object>> headers = new ArrayList<>();
-        headers.add(Arrays.asList(80));
-        headers.add(Arrays.asList(false, 81, "reqreqid"));
-        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracerid"));
+        headers.add(Arrays.asList(false, 81, "spanrid"));
+        headers.add(Arrays.asList(false, 82, "parentid"));
 
         WorkerMessage msg = Messages.write(session, data, headers);
         byte[] bytes = pack.write(Arrays.asList(session, 0, Collections.singletonList(data), headers));
@@ -91,9 +91,9 @@ public class WorkerMessageTemplateTest {
     public void writeErrorMessage() throws IOException {
         long session = 1L;
         List<List<Object>> headers = new ArrayList<>();
-        headers.add(Arrays.asList(80));
-        headers.add(Arrays.asList(false, 81, "reqreqid"));
-        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracerid"));
+        headers.add(Arrays.asList(false, 81, "spanrid"));
+        headers.add(Arrays.asList(false, 82, "parentid"));
 
         int category = 1;
         int code = -200;
@@ -111,9 +111,9 @@ public class WorkerMessageTemplateTest {
     public void writeCloseMessage() throws IOException {
         long session = 1L;
         List<List<Object>> headers = new ArrayList<>();
-        headers.add(Arrays.asList(80));
-        headers.add(Arrays.asList(false, 81, "reqreqid"));
-        headers.add(Arrays.asList(false, "X-Request-Id", "tracetid"));
+        headers.add(Arrays.asList(false, "X-Request-Id", "tracerid"));
+        headers.add(Arrays.asList(false, 81, "spanrid"));
+        headers.add(Arrays.asList(false, 82, "parentid"));
 
         WorkerMessage msg = Messages.close(session, headers);
         byte[] bytes = pack.write(Arrays.asList(session, 2, Arrays.asList(), headers));
