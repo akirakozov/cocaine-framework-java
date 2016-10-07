@@ -2,6 +2,8 @@ package cocaine.msgpack;
 
 import cocaine.message.Message;
 import cocaine.request.RequestIdStack;
+import org.apache.log4j.Logger;
+import org.msgpack.MessageTypeException;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
@@ -18,6 +20,7 @@ import java.util.List;
  * @author akirakozov
  */
 public final class MessageTemplate<T> extends AbstractTemplate<Message> {
+    private static final Logger logger = Logger.getLogger(MessageTemplate.class);
 
     private static final Template<Message> instance = new MessageTemplate();
     private MessageTemplate() {
@@ -49,25 +52,31 @@ public final class MessageTemplate<T> extends AbstractTemplate<Message> {
         List<List<Object>> headers = new ArrayList<>();
         if (size == 4) {
             int count = unpacker.readArrayBegin();
-            for (int i = 0; i < count; i++) {
-                Value headerValue = unpacker.readValue();
-                if (headerValue.getType() != ValueType.INTEGER) {
-                    List<Object> header = new ArrayList<>();
-                    ArrayValue array = headerValue.asArrayValue();
-                    for (Value part : array) {
-                        header.add(readHeaderPart(part));
+            try {
+                for (int i = 0; i < count; i++) {
+                    Value headerValue = unpacker.readValue();
+                    if (headerValue.getType() != ValueType.INTEGER) {
+                        List<Object> header = new ArrayList<>();
+                        ArrayValue array = headerValue.asArrayValue();
+                        for (Value part : array) {
+                            header.add(readHeaderPart(part));
+                        }
+                        headers.add(header);
                     }
-                    headers.add(header);
                 }
+
+            } catch (MessageTypeException e) {
+                logger.warn("Reading message failed; session " + session + ", messageType " + messageType, e);
+            } finally {
+                unpacker.readArrayEnd();
             }
-            if (headers.size() != RequestIdStack.AVAILABLE_IDS.size()) {
-                headers.clear();
-            }
-            unpacker.readArrayEnd();
         }
 
         unpacker.readArrayEnd();
 
+        if (headers.size() != RequestIdStack.AVAILABLE_IDS.size()) {
+            headers.clear();
+        }
         return new Message(messageType, session, payload, headers);
     }
 
