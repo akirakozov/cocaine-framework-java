@@ -53,20 +53,16 @@ public class ServiceFactory {
     }
 
     public <T extends AutoCloseable> T createService(Class<T> type) {
-        return createService(type, 0, false);
+        return createService(type, new ServiceOptions());
     }
 
-    public <T extends AutoCloseable> T createService(Class<T> type, long readTimeoutInMs,
-            boolean immediatelyFlushAllInvocations)
-    {
-        Service service = locator.service(getServiceName(type), readTimeoutInMs, immediatelyFlushAllInvocations);
+    public <T extends AutoCloseable> T createService(Class<T> type, ServiceOptions options) {
+        Service service = locator.service(getServiceName(type), options);
         return create(type, new ServiceMethodHandler(service));
     }
 
-    public <T extends AutoCloseable> T createApp(Class<T> type, long readTimeoutInMs,
-            boolean immediatelyFlushAllInvocations)
-    {
-        Service service = locator.service(getServiceName(type), readTimeoutInMs, immediatelyFlushAllInvocations);
+    public <T extends AutoCloseable> T createApp(Class<T> type, ServiceOptions options) {
+        Service service = locator.service(getServiceName(type), options);
         return create(type, new AppServiceMethodHandler(service));
     }
 

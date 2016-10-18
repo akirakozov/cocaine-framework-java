@@ -13,17 +13,23 @@ public class Session<T> implements AutoCloseable {
     private final TransmitChannel tx;
     private final Sessions sessions;
 
+    private final Channel channel;
+    private final Runnable closeChannelCallback;
+
     public Session(
             long id, String serviceName,
             TransactionTree rx, TransactionTree tx,
-            long readTimeout,
+            long readTimeoutInMs,
             CocaineProtocol protocol,
             Sessions sessions,
             Channel channel,
+            Runnable closeChannelCallback,
             CocainePayloadDeserializer deserializer)
     {
+        this.channel = channel;
+        this.closeChannelCallback = closeChannelCallback;
         this.id = id;
-        this.rx = new ReceiveChannel(serviceName, rx, protocol, deserializer, readTimeout);
+        this.rx = new ReceiveChannel(serviceName, rx, protocol, deserializer, readTimeoutInMs);
         this.tx = new TransmitChannel(serviceName, tx, channel, id);
         this.sessions = sessions;
     }
@@ -40,14 +46,20 @@ public class Session<T> implements AutoCloseable {
         return id;
     }
 
+    public Channel getChannel() {
+        return channel;
+    }
+
     @Override
     public void close() throws Exception {
         sessions.removeSession(id);
         onCompleted();
+        closeChannelCallback.run();
     }
 
     public void onCompleted() {
         rx.onCompleted();
         tx.onCompleted();
+        closeChannelCallback.run();
     }
 }

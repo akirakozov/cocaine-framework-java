@@ -26,7 +26,7 @@ public class ReceiveChannel<T> {
     private final CocaineProtocol protocol;
     private final CocainePayloadDeserializer<T> deserializer;
     private final String serviceName;
-    private final long readTimeout;
+    private final long readTimeoutInMs;
 
     private boolean completed = false;
     private boolean hasError = false;
@@ -36,14 +36,14 @@ public class ReceiveChannel<T> {
             TransactionTree rxTree,
             CocaineProtocol protocol,
             CocainePayloadDeserializer<T> deserializer,
-            long readTimeout)
+            long readTimeoutInMs)
     {
         this.serviceName = serviceName;
         this.rxTree = rxTree;
         this.queue = new LinkedBlockingQueue<>();
         this.protocol = protocol;
         this.deserializer = deserializer;
-        this.readTimeout = readTimeout;
+        this.readTimeoutInMs = readTimeoutInMs;
     }
 
     public T get() {
@@ -106,13 +106,13 @@ public class ReceiveChannel<T> {
     }
 
     private ResultMessage pollTheQueue() throws InterruptedException {
-        if (readTimeout == 0) {
+        if (readTimeoutInMs == 0) {
             return queue.take();
         } else {
-            ResultMessage result = queue.poll(readTimeout, TimeUnit.MILLISECONDS);
+            ResultMessage result = queue.poll(readTimeoutInMs, TimeUnit.MILLISECONDS);
             if (result == null) {
                 throw new ServiceException(serviceName,
-                        "Read timeout occurred in receive channel, timeout = " + readTimeout + " ms");
+                        "Read timeout occurred in receive channel, timeout = " + readTimeoutInMs + " ms");
             }
             return result;
         }

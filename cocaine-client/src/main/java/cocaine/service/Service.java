@@ -3,89 +3,45 @@ package cocaine.service;
 import cocaine.CocaineException;
 import cocaine.api.ServiceApi;
 import cocaine.api.TransactionTree;
-import cocaine.locator.Locator;
-import cocaine.netty.ServiceMessageHandler;
+import cocaine.netty.channel.CocaineChannelPoolFactory;
 import cocaine.session.*;
-import cocaine.session.protocol.CocaineProtocolsRegistry;
-import cocaine.session.protocol.DefaultCocaineProtocolRegistry;
 import cocaine.session.protocol.PrimitiveProtocol;
-import com.google.common.base.Supplier;
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
+import io.netty.channel.pool.ChannelPool;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
 
-import java.net.SocketAddress;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author akirakozov
  */
-public class Service implements  AutoCloseable {
+public class Service implements AutoCloseable {
     private static final Logger logger = Logger.getLogger(Service.class);
-    private static final long DEFAULT_SERVICE_AVAILABILITY_TIMEOUT_IN_MS = 60000;
 
-    private final String name;
     private final ServiceApi api;
     private final Sessions sessions;
 
-    private final EventLoopGroup eventLoopGroup;
-    private final ChannelInitializer<Channel> channelInitializer;
+    private final ChannelPool channelPool;
 
     private AtomicBoolean closed;
-    private volatile CountDownLatch channelLatch = new CountDownLatch(1);
-    private Channel channel;
+    private final ServiceOptions options;
 
-    private boolean immediatelyFlushAllInvocations;
-
-    private Service(
-            String name, ServiceApi api, EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer,
-            Supplier<SocketAddress> endpoint, long readTimeout, boolean immediatelyFlushAllInvocations,
-            CocaineProtocolsRegistry protocolsRegistry)
+    private Service(ServiceApi api, ServiceSpecification specs, ServiceOptions options)
     {
-        this.name = name;
-        this.sessions = new Sessions(name, readTimeout, protocolsRegistry);
+        this.sessions = new Sessions(specs.name, options.readTimeoutInMs, specs.protocolsRegistry);
         this.api = api;
-
-        this.eventLoopGroup = eventLoopGroup;
-        this.channelInitializer = channelInitializer;
+        this.channelPool = new CocaineChannelPoolFactory()
+                .getChannelPool(specs, sessions, options.maxNumberOfOpenChannels);
 
         this.closed = new AtomicBoolean(false);
-        this.immediatelyFlushAllInvocations = immediatelyFlushAllInvocations;
-
-        connect(eventLoopGroup, channelInitializer, endpoint);
+        this.options = options;
     }
 
-    private Service(String name, ServiceApi api,
-            EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer, Supplier<SocketAddress> endpoint,
-            long readTimeout, boolean immediatelyFlushAllInvocations)
-    {
-        this(name, api, eventLoopGroup, channelInitializer, endpoint,
-                readTimeout, immediatelyFlushAllInvocations,
-                DefaultCocaineProtocolRegistry.getDefaultRegistry());
-    }
-
-    public static Service create(
-            String name,
-            EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer, Supplier<SocketAddress> endpoint,
-            long readTimeout, boolean immediatelyFlushAllInvocations,
-            ServiceApi api, CocaineProtocolsRegistry protocolsRegistry)
-    {
-        return new Service(name, api, eventLoopGroup, channelInitializer, endpoint,
-                readTimeout, immediatelyFlushAllInvocations,
-                protocolsRegistry);
-    }
-
-    public static Service create(
-            String name, EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer,
-            Supplier<SocketAddress> endpoint, long readTimeout, boolean immediatelyFlushAllInvocations, ServiceApi api)
-    {
-        return new Service(name, api, eventLoopGroup, channelInitializer, endpoint,
-                readTimeout, immediatelyFlushAllInvocations);
+    public static Service create(ServiceApi api, ServiceSpecification specs, ServiceOptions options) {
+        return new Service(api, specs, options);
     }
 
     public Session<Value> invoke(String method, List<Object> args) {
@@ -93,17 +49,17 @@ public class Service implements  AutoCloseable {
     }
 
     public <T> Session<T> invoke(String method, CocainePayloadDeserializer<T> deserializer, List<Object> args) {
-        waitForServiceAvailability(Operation.INVOCATION);
-
+        Channel sessionChannel = getChannel();
         Session<T> session = sessions.create(
                 api.getReceiveTree(method),
                 api.getTransmitTree(method),
-                channel,
+                sessionChannel,
+                channelPool::release,
                 deserializer);
-        if (immediatelyFlushAllInvocations) {
-            InvocationUtils.invokeAndFlush(channel, session.getId(), api.getMessageId(method), args);
+        if (options.immediatelyFlushAllInvocations) {
+            InvocationUtils.invokeAndFlush(session.getChannel(), session.getId(), api.getMessageId(method), args);
         } else {
-            InvocationUtils.invoke(channel, session.getId(), api.getMessageId(method), args);
+            InvocationUtils.invoke(session.getChannel(), session.getId(), api.getMessageId(method), args);
         }
 
         return session;
@@ -122,69 +78,26 @@ public class Service implements  AutoCloseable {
         return isPrimitiveRxProtocol && txTree.isEmpty();
     }
 
+    private Channel getChannel() {
+        try {
+            return channelPool.acquire().get();
+        } catch (Exception e) {
+            throw new CocaineException("Channel acquiring failed", e);
+        }
+    }
+
     @Override
-    public void close() throws Exception {
+    public void close() {
         logger.info("Closing service " + toString() + " and it's channel");
 
         if (closed.compareAndSet(false, true)) {
-            channel.close();
+            channelPool.close();
         }
     }
 
     @Override
     public String toString() {
-        return name + "/" + channel.remoteAddress();
+        //TODO: better service identifier (was "/" + channel.remoteAddress())
+        return sessions.getService();
     }
-
-    private void connect(final EventLoopGroup eventLoopGroup, final ChannelInitializer<Channel> channelInitializer,
-            final Supplier<SocketAddress> endpoint)
-    {
-        try {
-            Bootstrap bootstrap = Locator.createBootstrap(eventLoopGroup, channelInitializer);
-            ChannelFuture connectFuture = bootstrap.connect(endpoint.get());
-
-            connectFuture.addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture cf) throws Exception {
-                    if (cf.isSuccess()) {
-                        channel = cf.channel();
-                        channelLatch.countDown();
-
-                        channel.pipeline().addLast(new ServiceMessageHandler(name, sessions));
-                        channel.closeFuture().addListener((ChannelFutureListener) future -> {
-                            if (!closed.get() && !bootstrap.group().isShuttingDown()) {
-                                sessions.onCompleted();
-                                channelLatch = new CountDownLatch(1);
-                                new Thread(() -> connect(eventLoopGroup, channelInitializer, endpoint)).start();
-                            }
-                        });
-                    } else {
-                        throw new CocaineException("Couldn't connect to " + endpoint.get());
-                    }
-                }
-            });
-
-            waitForServiceAvailability(Operation.CONNECTION);
-
-            logger.info("Service " + name + " connected successfully");
-        } catch (Exception e) {
-            throw new CocaineException(e);
-        }
-    }
-
-    private void waitForServiceAvailability(Operation operation) {
-        try {
-            if (!channelLatch.await(DEFAULT_SERVICE_AVAILABILITY_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
-                throw new CocaineException("Service " + name + " unavailable");
-            }
-        } catch (InterruptedException e) {
-            throw new CocaineException(operation.name().toLowerCase() + " for service " + name
-                    + " interrupted while waiting for connection to arrive");
-        }
-    }
-
-    private enum Operation {
-        CONNECTION, INVOCATION
-    }
-
 }

@@ -5,12 +5,14 @@ import cocaine.message.Message;
 import cocaine.session.protocol.CocaineProtocol;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
 import io.netty.channel.Channel;
+import io.netty.util.concurrent.Future;
 import org.apache.log4j.Logger;
 import org.msgpack.type.Value;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 /**
  * @author akirakozov
@@ -21,32 +23,39 @@ public class Sessions {
     private final AtomicLong counter;
     private final Map<Long, Session> sessions;
     private final String service;
-    private final long readTimeout;
+    private final long readTimeoutInMs;
     private final CocaineProtocolsRegistry protocolsRegistry;
 
-    public Sessions(String service, long readTimeout, CocaineProtocolsRegistry protocolsRegistry) {
+    public Sessions(String service, long readTimeoutInMs, CocaineProtocolsRegistry protocolsRegistry) {
         this.service = service;
-        this.readTimeout = readTimeout;
+        this.readTimeoutInMs = readTimeoutInMs;
         this.counter = new AtomicLong(1);
         this.sessions = new ConcurrentHashMap<>();
         this.protocolsRegistry = protocolsRegistry;
     }
 
-    public <T> Session<T> create(
-            TransactionTree rx, TransactionTree tx,
-            Channel channel, CocainePayloadDeserializer<T> deserializer)
+    public String getService() {
+        return service;
+    }
+
+    public <T> Session<T> create(TransactionTree rx, TransactionTree tx,
+            Channel channel, Function<Channel, Future<Void>> closeChannelCallback,
+            CocainePayloadDeserializer<T> deserializer)
     {
         long id = counter.getAndIncrement();
 
         logger.debug("Creating new session: " + id);
         CocaineProtocol protocol = protocolsRegistry.findProtocol(rx);
-        Session session = new Session(id, service, rx, tx, readTimeout, protocol, this, channel, deserializer);
+        Session session = new Session(id, service, rx, tx, readTimeoutInMs, protocol, this,
+                channel, () -> closeChannelCallback.apply(channel), deserializer);
         sessions.put(id, session);
         return session;
     }
 
-    public Session<Value> create(TransactionTree rx, TransactionTree tx, Channel channel) {
-        return create(rx, tx, channel, new ValueIdentityPayloadDeserializer());
+    public Session<Value> create(TransactionTree rx, TransactionTree tx,
+            Channel channel, Function<Channel, Future<Void>> closeChannelCallback)
+    {
+        return create(rx, tx, channel, closeChannelCallback, new ValueIdentityPayloadDeserializer());
     }
 
     public void onEvent(Message msg) {

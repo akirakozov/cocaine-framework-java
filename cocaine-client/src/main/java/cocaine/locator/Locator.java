@@ -4,11 +4,12 @@ import cocaine.ServiceInfo;
 import cocaine.api.ServiceApi;
 import cocaine.api.TransactionTree;
 import cocaine.msgpack.ServiceInfoTemplate;
-import cocaine.netty.MessageDecoder;
-import cocaine.netty.MessagePackableEncoder;
 import cocaine.service.Service;
+import cocaine.service.ServiceOptions;
+import cocaine.service.ServiceSpecification;
 import cocaine.session.Session;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
+import cocaine.session.protocol.DefaultCocaineProtocolRegistry;
 import com.google.common.base.Suppliers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -46,12 +47,18 @@ public final class Locator implements AutoCloseable {
         this.pack = pack;
         this.eventLoops = new ArrayList<>();
 
-        this.service = Service.create("locator", createSeparateEventLoop(), createChannelInitializer(pack),
-                Suppliers.ofInstance(endpoint), 0, false, createLocatorApi());
+        ServiceSpecification specs = new ServiceSpecification("locator", Suppliers.ofInstance(endpoint),
+                createSeparateEventLoop(), pack, DefaultCocaineProtocolRegistry.getDefaultRegistry());
+        ServiceOptions options = new ServiceOptions();
+        this.service = Service.create(createLocatorApi(), specs, options);
     }
 
     public static Bootstrap createBootstrap(EventLoopGroup eventLoopGroup, ChannelInitializer<Channel> channelInitializer)
     {
+        return createBootstrap(eventLoopGroup).handler(channelInitializer);
+    }
+
+    public static Bootstrap createBootstrap(EventLoopGroup eventLoopGroup) {
         return new Bootstrap()
                 .group(eventLoopGroup)
 
@@ -59,9 +66,7 @@ public final class Locator implements AutoCloseable {
 
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) TimeUnit.SECONDS.toMillis(4))
                 .option(ChannelOption.TCP_NODELAY, true)
-                .option(ChannelOption.SO_KEEPALIVE, true)
-
-                .handler(channelInitializer);
+                .option(ChannelOption.SO_KEEPALIVE, true);
     }
 
     public static Locator create() {
@@ -77,30 +82,19 @@ public final class Locator implements AutoCloseable {
         return new Locator(endpoint, pack);
     }
 
-    public Service service(final String name, final long readTimeout, final boolean immediatelyFlushAllInvocations) {
-        return createService(name, readTimeout, immediatelyFlushAllInvocations, Optional.empty());
+    public Service service(final String name, final ServiceOptions options) {
+        return createService(name, options, DefaultCocaineProtocolRegistry.getDefaultRegistry());
     }
 
-    public Service service(final String name, final long readTimeout, final CocaineProtocolsRegistry registry,
-            final boolean immediatelyFlushAllInvocations)
-    {
-        return createService(name, readTimeout, immediatelyFlushAllInvocations, Optional.of(registry));
+    public Service service(final String name, final ServiceOptions options, final CocaineProtocolsRegistry registry) {
+        return createService(name, options, registry);
     }
 
     @Override
     public void close() {
         logger.info("Shutting down locator");
+        service.close();
         eventLoops.forEach(EventExecutorGroup::shutdownGracefully);
-    }
-
-    private static ChannelInitializer<Channel> createChannelInitializer(final MessagePack pack) {
-        return new ChannelInitializer<Channel>() {
-            public void initChannel(Channel channel) {
-                channel.pipeline()
-                        .addLast("Message Decoder", new MessageDecoder(pack))
-                        .addLast("Message Packable Encoder", new MessagePackableEncoder(pack));
-            }
-        };
     }
 
     private EventLoopGroup createSeparateEventLoop() {
@@ -109,20 +103,15 @@ public final class Locator implements AutoCloseable {
         return eventLoop;
     }
 
-    private Service createService(final String name,
-            final long readTimeout, final boolean immediatelyFlushAllInvocations,
-            final Optional<CocaineProtocolsRegistry> registry)
+    private Service createService(final String name, final ServiceOptions options,
+            final CocaineProtocolsRegistry registry)
     {
         logger.info("Creating service " + name);
         // TODO: use all endpoints instead of only first
         ServiceInfo info = resolve(name);
-        if (registry.isPresent()) {
-            return Service.create(name, createSeparateEventLoop(), createChannelInitializer(pack),
-                    () -> info.getEndpoints().get(0), readTimeout, immediatelyFlushAllInvocations, info.getApi(), registry.get());
-        } else {
-            return Service.create(name, createSeparateEventLoop(), createChannelInitializer(pack),
-                    () -> info.getEndpoints().get(0), readTimeout, immediatelyFlushAllInvocations, info.getApi());
-        }
+        ServiceSpecification specs = new ServiceSpecification(name, () -> info.getEndpoints().get(0),
+                createSeparateEventLoop(), pack, registry);
+        return Service.create(info.getApi(), specs, options);
     }
 
     private ServiceInfo resolve(String name) {
