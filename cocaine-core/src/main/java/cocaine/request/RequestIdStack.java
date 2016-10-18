@@ -11,25 +11,25 @@ import java.util.Map;
 public class RequestIdStack {
     public static final List<Type> AVAILABLE_IDS = Arrays.asList(Type.TRACE_ID, Type.SPAN_ID, Type.PARENT_ID);
 
-    private static final ThreadLocal<Map<Type, String>> currentIds = new ThreadLocal<>();
+    private static final ThreadLocal<Map<Type, byte[]>> currentIds = new ThreadLocal<>();
 
     public static boolean hasAllIds() {
         return currentIds.get() != null && currentIds.get().size() == AVAILABLE_IDS.size();
     }
 
-    public static String currentId(Type type) {
+    public static byte[] currentId(Type type) {
         return currentIds.get() == null ? null : currentIds.get().get(type);
     }
 
     public static void pushReplaceId(List<Object> header) {
         if (header.size() == 3) {
             Type type = Type.byHeaderIndex((Integer) header.get(1));
-            String id = header.get(2).toString();
+            byte[] id = (byte[]) header.get(2);
             pushReplaceId(type, id);
         }
     }
 
-    public static void pushReplaceId(Type type, String id) {
+    public static void pushReplaceId(Type type, byte[] id) {
         if (currentIds.get() == null) {
             currentIds.set(new HashMap<>());
         }
@@ -74,7 +74,7 @@ public class RequestIdStack {
                     return type;
                 }
             }
-            throw new IllegalArgumentException("Invalid request id related header index");
+            return null;
         }
     }
 }

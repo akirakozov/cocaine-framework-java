@@ -55,13 +55,12 @@ public final class MessageTemplate<T> extends AbstractTemplate<Message> {
             try {
                 for (int i = 0; i < count; i++) {
                     Value headerValue = unpacker.readValue();
-                    if (headerValue.getType() != ValueType.INTEGER) {
-                        List<Object> header = new ArrayList<>();
+                    if (headerValue.getType() == ValueType.ARRAY) {
                         ArrayValue array = headerValue.asArrayValue();
-                        for (Value part : array) {
-                            header.add(readHeaderPart(part));
+                        List<Object> header = parseHeader(array);
+                        if (!header.isEmpty()) {
+                            headers.add(header);
                         }
-                        headers.add(header);
                     }
                 }
 
@@ -80,17 +79,36 @@ public final class MessageTemplate<T> extends AbstractTemplate<Message> {
         return new Message(messageType, session, payload, headers);
     }
 
-    private Object readHeaderPart(Value part) throws IOException {
+    private Object readHeaderPart(Value part) {
         switch (part.getType()) {
             case BOOLEAN:
                 return part.asBooleanValue().getBoolean();
             case INTEGER:
                 return part.asIntegerValue().getInt();
             case RAW:
-                return part.asRawValue().getString();
+                return part.asRawValue().getByteArray();
             default:
-                return part.toString();
+                throw new MessageTypeException("Failed to parse header part");
         }
+    }
+
+    private List<Object> parseHeader(ArrayValue array) {
+        List<Object> result = new ArrayList<>();
+
+        if (array.size() == 3
+                && array.get(0).getType() == ValueType.BOOLEAN
+                && array.get(1).getType() == ValueType.INTEGER
+                && array.get(2).getType() == ValueType.RAW)
+        {
+            Integer headerIndex = (Integer) readHeaderPart(array.get(1));
+            if (RequestIdStack.Type.byHeaderIndex(headerIndex) != null) {
+                result.add(readHeaderPart(array.get(0)));
+                result.add(headerIndex);
+                result.add(readHeaderPart(array.get(2)));
+            }
+        }
+
+        return result;
     }
 
 }

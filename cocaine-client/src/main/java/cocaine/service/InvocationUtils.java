@@ -43,14 +43,14 @@ public class InvocationUtils {
         List<List<Object>> result = new ArrayList<>();
         if (RequestIdStack.hasAllIds()) {
             RequestIdStack.AVAILABLE_IDS.forEach(type -> {
-                String id = RequestIdStack.currentId(type);
+                byte[] id = RequestIdStack.currentId(type);
                 result.add(constructRequestIdHeader(type, id));
             });
         }
         return result;
     }
 
-    private static List<Object> constructRequestIdHeader(RequestIdStack.Type type, String value) {
+    private static List<Object> constructRequestIdHeader(RequestIdStack.Type type, byte[] value) {
         List<Object> result = new ArrayList<>();
         result.add(false);
         result.add(type.getHeaderIndex());

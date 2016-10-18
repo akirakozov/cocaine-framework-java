@@ -30,7 +30,7 @@ public class MessageTemplateTest {
         List<List<Object>> headers = new ArrayList<>();
         headers.add(Arrays.asList(false, "X-Request-Id", "tracerid"));
         headers.add(Arrays.asList(false, 81, "spanrid"));
-        headers.add(Arrays.asList(false, 82, "parentid"));
+        headers.add(Arrays.asList(false, 82, new byte[]{100, 101, -1, 99, 102, 103, -2, 104}));
 
         byte[] bytes = pack.write(Arrays.asList(session, messageType, true, headers));
         byte[] result = pack.write(new Message(messageType, session, ValueFactory.createBooleanValue(true), headers),
@@ -42,8 +42,8 @@ public class MessageTemplateTest {
     public void writeReadMessageV12() throws IOException {
         List<Object> headers = new ArrayList<>();
         headers.add(80);
-        headers.add(Arrays.asList(false, 81, "spanrid"));
-        headers.add(Arrays.asList(false, 82, "parentid"));
+        headers.add(Arrays.asList(false, 85, "spanrid"));
+        headers.add(Arrays.asList(false, 82, new byte[]{100, 101, -1, 99, 102, 103, -2, 104}));
 
         byte[] bytes = pack.write(Arrays.asList(1, 0, true, headers));
         Message result = pack.read(bytes, MessageTemplate.getInstance());
