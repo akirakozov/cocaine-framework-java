@@ -36,7 +36,7 @@ public class SingleChannelPool implements ChannelPool {
 
     private AtomicBoolean closed;
     private volatile CountDownLatch channelLatch = new CountDownLatch(1);
-    private Channel channel;
+    private Channel channel = null;
 
     public SingleChannelPool(String name, Sessions sessions, EventLoopGroup eventLoopGroup,
             ChannelInitializer<Channel> channelInitializer, Supplier<SocketAddress> endpoint)
@@ -51,7 +51,9 @@ public class SingleChannelPool implements ChannelPool {
 
     @Override
     public Future<Channel> acquire() {
-        connect();
+        if (channel == null) {
+            connect();
+        }
         return eventLoopGroup.next().newSucceededFuture(channel);
     }
 
