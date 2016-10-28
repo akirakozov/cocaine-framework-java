@@ -1,9 +1,13 @@
 package cocaine.message;
 
+import cocaine.hpack.Decoder;
+import cocaine.hpack.Encoder;
 import org.msgpack.type.Value;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import cocaine.hpack.HeaderField;
 
 /**
  * @author akirakozov
@@ -12,9 +16,9 @@ public class Message {
     private final int type;
     private final long session;
     private final Value payload;
-    private final List<List<Object>> headers;
+    private List<HeaderField> headers;
 
-    public Message(int type, long session, Value payload, List<List<Object>> headers) {
+    public Message(int type, long session, Value payload, List<HeaderField> headers) {
         this.type = type;
         this.session = session;
         this.payload = payload;
@@ -33,7 +37,7 @@ public class Message {
         return payload;
     }
 
-    public List<List<Object>> getHeaders() {
+    public List<HeaderField> getHeaders() {
         return headers;
     }
 

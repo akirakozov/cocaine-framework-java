@@ -1,5 +1,7 @@
 package cocaine.message;
 
+import cocaine.hpack.HeaderField;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -20,19 +22,19 @@ public final class Messages {
         return new TerminateMessage(reason, message);
     }
 
-    public static WorkerMessage invoke(long session, List<List<Object>> headers, String event) {
+    public static WorkerMessage invoke(long session, List<HeaderField> headers, String event) {
         return new InvokeMessage(session, headers, event);
     }
 
-    public static WorkerMessage write(long session, byte[] data, List<List<Object>> headers) {
+    public static WorkerMessage write(long session, byte[] data, List<HeaderField> headers) {
         return new WriteMessage(session, data, headers);
     }
 
-    public static WorkerMessage close(long session, List<List<Object>> headers) {
+    public static WorkerMessage close(long session, List<HeaderField> headers) {
         return new CloseMessage(session, headers);
     }
 
-    public static WorkerMessage error(long session, List<List<Object>> headers, int category, int code, String message) {
+    public static WorkerMessage error(long session, List<HeaderField> headers, int category, int code, String message) {
         return new ErrorMessage(session, headers, category, code, message);
     }
 

@@ -2,7 +2,7 @@ package cocaine.netty.channel;
 
 import cocaine.locator.Locator;
 import cocaine.netty.MessageDecoder;
-import cocaine.netty.MessagePackableEncoder;
+import cocaine.netty.InvocationRequestEncoder;
 import cocaine.netty.ServiceMessageHandler;
 import cocaine.service.ServiceSpecification;
 import cocaine.session.Sessions;
@@ -45,7 +45,7 @@ public class CocaineChannelPoolFactory implements ChannelPoolFactory {
             public void initChannel(Channel channel) {
                 channel.pipeline()
                         .addLast("Message Decoder", new MessageDecoder(pack))
-                        .addLast("Message Packable Encoder", new MessagePackableEncoder(pack));
+                        .addLast("Message Packable Encoder", new InvocationRequestEncoder(pack));
             }
         };
     }
@@ -56,7 +56,7 @@ public class CocaineChannelPoolFactory implements ChannelPoolFactory {
             public void channelCreated(Channel ch) throws Exception {
                 ch.pipeline()
                         .addLast("Message Decoder", new MessageDecoder(pack))
-                        .addLast("Message Packable Encoder", new MessagePackableEncoder(pack))
+                        .addLast("Message Packable Encoder", new InvocationRequestEncoder(pack))
                         .addLast(new ServiceMessageHandler(sessions.getService(), sessions));
             }
         };
