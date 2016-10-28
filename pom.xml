@@ -63,6 +63,7 @@
         <module>cocaine-worker-archetype</module>
         <module>cocaine-client-archetype</module>
         <module>cocaine-http-worker</module>
+        <module>cocaine-hpack</module>
     </modules>
 
     <prerequisites>

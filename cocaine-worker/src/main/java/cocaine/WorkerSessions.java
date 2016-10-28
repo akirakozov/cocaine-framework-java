@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import cocaine.hpack.HeaderField;
 import cocaine.message.ErrorMessage;
 import org.apache.log4j.Logger;
 import rx.Observable;
@@ -28,7 +29,7 @@ final class WorkerSessions {
         this.sessions = new ConcurrentHashMap<>();
     }
 
-    public Session create(long id, List<List<Object>> headers) {
+    public Session create(long id, List<HeaderField> headers) {
         Subject<byte[], byte[]> input = ReplaySubject.create();
         Subject<byte[], byte[]> output = PublishSubject.create();
         output.subscribe(new Writer(id, headers, worker));
@@ -111,10 +112,10 @@ final class WorkerSessions {
     private static final class Writer implements Observer<byte[]> {
 
         private final long session;
-        private final List<List<Object>> headers;
+        private final List<HeaderField> headers;
         private final Worker worker;
 
-        public Writer(long session, List<List<Object>> headers, Worker worker) {
+        public Writer(long session, List<HeaderField> headers, Worker worker) {
             this.session = session;
             this.headers = headers;
             this.worker = worker;

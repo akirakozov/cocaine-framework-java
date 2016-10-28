@@ -1,5 +1,7 @@
 package cocaine.service;
 
+import cocaine.hpack.Encoder;
+import cocaine.hpack.HeaderField;
 import cocaine.request.RequestIdStack;
 import com.google.common.base.Joiner;
 import io.netty.channel.Channel;
@@ -39,55 +41,30 @@ public class InvocationUtils {
         };
     }
 
-    private static List<List<Object>> constructRequestIdHeaders() {
-        List<List<Object>> result = new ArrayList<>();
-        if (RequestIdStack.hasAllIds()) {
-            RequestIdStack.AVAILABLE_IDS.forEach(type -> {
-                byte[] id = RequestIdStack.currentId(type);
-                result.add(constructRequestIdHeader(type, id));
-            });
+    private static List<HeaderField> constructRequestIdHeaders() {
+        List<HeaderField> headers = new ArrayList<>();
+        if (!RequestIdStack.empty()) {
+            RequestIdStack.State s = RequestIdStack.current.get();
+            headers.add(new HeaderField("trace_id".getBytes(), HeaderField.valueFromInt(s.trace_id)));
+            headers.add(new HeaderField("span_id".getBytes(), HeaderField.valueFromInt(s.span_id)));
+            headers.add(new HeaderField("parent_id".getBytes(), HeaderField.valueFromInt(s.parent_id)));
         }
-        return result;
+        return headers;
     }
 
-    private static List<Object> constructRequestIdHeader(RequestIdStack.Type type, byte[] value) {
-        List<Object> result = new ArrayList<>();
-        result.add(false);
-        result.add(type.getHeaderIndex());
-        result.add(value);
-        return result;
-    }
+    public static class InvocationRequest {
 
-    private static class InvocationRequest implements MessagePackable {
+        public final int method;
+        public final long session;
+        public final List<Object> args;
 
-        private final int method;
-        private final long session;
-        private final List<Object> args;
+        public final List<HeaderField> headers;
 
-        private final List<List<Object>> headers;
-
-        public InvocationRequest(int method, long session, List<Object> args, List<List<Object>> headers) {
+        public InvocationRequest(int method, long session, List<Object> args, List<HeaderField> headers) {
             this.method = method;
             this.session = session;
             this.args = args;
             this.headers = headers;
-        }
-
-        @Override
-        public void writeTo(Packer packer) throws IOException {
-            packer.writeArrayBegin(headers.isEmpty() ? 3 : 4);
-            packer.write(session);
-            packer.write(method);
-            packer.write(args);
-            if (!headers.isEmpty()) {
-                packer.write(headers);
-            }
-            packer.writeArrayEnd();
-        }
-
-        @Override
-        public void readFrom(Unpacker unpacker) {
-            throw new UnsupportedOperationException("Reading InvocationRequest is not supported");
         }
 
         @Override
