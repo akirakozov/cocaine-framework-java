@@ -11,6 +11,7 @@ import org.msgpack.type.Value;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
@@ -47,7 +48,7 @@ public class Sessions {
         logger.debug("Creating new session: " + id);
         CocaineProtocol protocol = protocolsRegistry.findProtocol(rx);
         Session session = new Session(id, service, rx, tx, readTimeoutInMs, protocol, this,
-                channel, () -> closeChannelCallback.apply(channel), deserializer);
+                channel, closeChannelCallbackToRunnable(closeChannelCallback, channel), deserializer);
         sessions.put(id, session);
         return session;
     }
@@ -63,7 +64,7 @@ public class Sessions {
         if (session != null) {
             session.rx().onRead(msg.getType(), msg.getPayload());
         } else {
-            logger.debug("Unknown mesage for service " + service
+            logger.debug("Unknown message for service " + service
                     + ", session:" + msg.getSession() + ", type: " + msg.getType());
         }
     }
@@ -87,5 +88,17 @@ public class Sessions {
 
     public void removeSession(long id) {
         sessions.remove(id);
+    }
+
+    private Runnable closeChannelCallbackToRunnable(Function<Channel, Future<Void>> closeChannelCallback,
+            Channel channel)
+    {
+        return () -> {
+            try {
+                closeChannelCallback.apply(channel).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        };
     }
 }

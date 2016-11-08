@@ -64,12 +64,12 @@ public class SingleChannelPool implements ChannelPool {
 
     @Override
     public Future<Void> release(Channel channel) {
-        return null;
+        return eventLoopGroup.next().newSucceededFuture(null);
     }
 
     @Override
     public Future<Void> release(Channel channel, Promise<Void> promise) {
-        return null;
+        return eventLoopGroup.next().newSucceededFuture(null);
     }
 
     @Override

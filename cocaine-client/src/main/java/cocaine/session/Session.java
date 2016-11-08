@@ -54,7 +54,6 @@ public class Session<T> implements AutoCloseable {
     public void close() throws Exception {
         sessions.removeSession(id);
         onCompleted();
-        closeChannelCallback.run();
     }
 
     public void onCompleted() {

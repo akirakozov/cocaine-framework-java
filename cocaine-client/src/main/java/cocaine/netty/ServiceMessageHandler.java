@@ -27,10 +27,4 @@ public class ServiceMessageHandler extends ChannelInboundHandlerAdapter {
         Message message = (Message) msg;
         sessions.onEvent(message);
     }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        sessions.onCompleted();
-    }
-
 }

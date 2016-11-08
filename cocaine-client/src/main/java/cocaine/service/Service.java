@@ -91,6 +91,7 @@ public class Service implements AutoCloseable {
         logger.info("Closing service " + toString() + " and it's channel");
 
         if (closed.compareAndSet(false, true)) {
+            sessions.onCompleted();
             channelPool.close();
         }
     }
