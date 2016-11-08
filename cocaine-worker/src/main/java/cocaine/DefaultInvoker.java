@@ -1,5 +1,6 @@
 package cocaine;
 
+import cocaine.hpack.HeaderField;
 import cocaine.request.RequestIdStack;
 import rx.Observable;
 import rx.Observer;
@@ -18,11 +19,14 @@ public class DefaultInvoker implements Invoker {
     }
 
     @Override
-    public void invoke(String event, List<List<Object>> headers, Observable<byte[]> request, Observer<byte[]> response) throws Exception {
+    public void invoke(String event, List<HeaderField> headers, Observable<byte[]> request, Observer<byte[]> response) throws Exception {
         EventHandler handler = provider.getHandler(event);
         if (handler != null) {
             try {
-                headers.forEach(RequestIdStack::pushReplaceId);
+                RequestIdStack.State state = new RequestIdStack.State(headers);
+                if(!state.empty()) {
+                    RequestIdStack.assign(state);
+                }
                 handler.handle(request, response);
             } finally {
                 RequestIdStack.pop();

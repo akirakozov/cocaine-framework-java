@@ -1,5 +1,6 @@
 package cocaine.message;
 
+import cocaine.hpack.HeaderField;
 import com.google.common.base.Preconditions;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public final class ErrorMessage extends WorkerMessage {
     private final int category;
     private final String message;
 
-    public ErrorMessage(long session, List<List<Object>> headers, int category, int code, String message) {
+    public ErrorMessage(long session, List<HeaderField> headers, int category, int code, String message) {
         super(MessageType.ERROR, session, headers);
         this.code = code;
         this.category = category;

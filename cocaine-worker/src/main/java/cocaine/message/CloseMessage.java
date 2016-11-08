@@ -1,5 +1,7 @@
 package cocaine.message;
 
+import cocaine.hpack.HeaderField;
+
 import java.util.List;
 
 /**
@@ -7,7 +9,7 @@ import java.util.List;
  */
 public final class CloseMessage extends WorkerMessage {
 
-    public CloseMessage(long session, List<List<Object>> headers) {
+    public CloseMessage(long session, List<HeaderField> headers) {
         super(MessageType.CLOSE, session, headers);
     }
 

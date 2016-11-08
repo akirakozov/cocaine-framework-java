@@ -1,5 +1,7 @@
 package cocaine.message;
 
+import cocaine.hpack.HeaderField;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,9 +14,9 @@ public abstract class WorkerMessage {
 
     private final MessageType type;
     private final long session;
-    private final List<List<Object>> headers;
+    private final List<HeaderField> headers;
 
-    protected WorkerMessage(MessageType type, long session, List<List<Object>> headers) {
+    protected WorkerMessage(MessageType type, long session, List<HeaderField> headers) {
         this.type = type;
         this.session = session;
         this.headers = headers;
@@ -32,7 +34,7 @@ public abstract class WorkerMessage {
         return session;
     }
 
-    public List<List<Object>> getHeaders() {
+    public List<HeaderField> getHeaders() {
         return headers;
     }
 

@@ -4,6 +4,7 @@ import cocaine.EventHandler;
 import cocaine.EventHandlersProvider;
 import cocaine.Invoker;
 import cocaine.UnknownClientMethodException;
+import cocaine.hpack.HeaderField;
 import cocaine.request.RequestIdStack;
 import org.apache.log4j.Logger;
 import rx.Observable;
@@ -32,12 +33,15 @@ public class MultiThreadInvoker implements Invoker {
     }
 
     @Override
-    public void invoke(String event, List<List<Object>> headers, Observable<byte[]> request, Observer<byte[]> response) throws Exception {
+    public void invoke(String event, List<HeaderField> headers, Observable<byte[]> request, Observer<byte[]> response) throws Exception {
         EventHandler handler = provider.getHandler(event);
         if (handler != null) {
             executor.execute( () -> {
                 try {
-                    headers.forEach(RequestIdStack::pushReplaceId);
+                    RequestIdStack.State state = new RequestIdStack.State(headers);
+                    if(!state.empty()) {
+                        RequestIdStack.assign(state);
+                    }
                     handler.handle(request, response);
                 } catch (Exception e) {
                     logger.warn(e, e);

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
+import cocaine.hpack.HeaderField;
 import cocaine.message.*;
 import cocaine.message.Message;
 import cocaine.message.WorkerMessageTemplate;
@@ -46,7 +47,7 @@ public class Worker implements AutoCloseable {
 
     public Worker(WorkerOptions options, Invoker invoker) {
         this.pack = new MessagePack();
-        this.pack.register(Message.class, MessageTemplate.getInstance());
+//        this.pack.register(Message.class, MessageTemplate.getInstance());
         this.pack.register(WorkerMessage.class, WorkerMessageTemplate.getInstance());
         this.options = options;
         this.invoker = invoker;
@@ -227,15 +228,15 @@ public class Worker implements AutoCloseable {
         logger.debug("Heartbeat has been sent. Start disown timer");
     }
 
-    void sendChoke(long session, List<List<Object>> headers) {
+    void sendChoke(long session, List<HeaderField> headers) {
         this.write(Messages.close(session, headers));
     }
 
-    void sendChunk(long session, byte[] data, List<List<Object>> headers) {
+    void sendChunk(long session, byte[] data, List<HeaderField> headers) {
         this.write(Messages.write(session, data, headers));
     }
 
-    void sendError(long session, List<List<Object>> headers, int category, int code, String message) {
+    void sendError(long session, List<HeaderField> headers, int category, int code, String message) {
         this.write(Messages.error(session, headers, category, code, message));
     }
 
@@ -294,9 +295,10 @@ public class Worker implements AutoCloseable {
         public void run() {
             try {
                 Unpacker unpacker = pack.createUnpacker(getSocketInputStream());
+                MessageTemplate messageTemplate = new MessageTemplate();
                 while (true) {
                     try {
-                        Worker.this.dispatch(unpacker.read(Message.class));
+                        Worker.this.dispatch(unpacker.read(messageTemplate));
                     } catch (Exception e) {
                         logger.warn(e, e);
                         Thread.sleep(1000);

@@ -1,5 +1,6 @@
 package cocaine.message;
 
+import cocaine.hpack.HeaderField;
 import com.google.common.base.Preconditions;
 
 import java.util.List;
@@ -11,7 +12,7 @@ public final class InvokeMessage extends WorkerMessage {
 
     private final String event;
 
-    public InvokeMessage(long session, List<List<Object>> headers, String event) {
+    public InvokeMessage(long session, List<HeaderField> headers, String event) {
         super(MessageType.INVOKE, session, headers);
         this.event = Preconditions.checkNotNull(event, "Event can not be null");
     }
