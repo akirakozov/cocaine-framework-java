@@ -22,76 +22,58 @@ import java.util.List;
 import org.msgpack.type.ArrayValue;
 import org.msgpack.type.Value;
 import org.msgpack.type.ValueType;
-import org.msgpack.unpacker.Unpacker;
 
-import static cocaine.hpack.HeaderField.HEADER_ENTRY_OVERHEAD;
 
 public final class Decoder {
+    private static final IOException DECOMPRESSION_EXCEPTION = new IOException("decompression failure");
 
-  private static final IOException DECOMPRESSION_EXCEPTION =
-      new IOException("decompression failure");
-  private static final IOException ILLEGAL_INDEX_VALUE =
-      new IOException("illegal index value");
-  private static final IOException INVALID_MAX_DYNAMIC_TABLE_SIZE =
-      new IOException("invalid max dynamic table size");
-  private static final IOException MAX_DYNAMIC_TABLE_SIZE_CHANGE_REQUIRED =
-      new IOException("max dynamic table size change required");
+    private final DynamicTable dynamicTable;
 
-  private final DynamicTable dynamicTable;
+    public static final int DEFAULT_TABLE_SIZE = 4096;
 
-  public static final int DEFAULT_TABLE_SIZE = 4096;
-  /**
-   * Creates a new decoder.
-   */
-  public Decoder(int maxHeaderTableSize) {
-    dynamicTable = new DynamicTable(maxHeaderTableSize);
-  }
-
-  /**
-   * Decode the header block into header fields.
-   */
-  public List<HeaderField> decode(Value raw_data) throws IOException {
-    if(!raw_data.isArrayValue()) {
-      throw DECOMPRESSION_EXCEPTION;
+    public Decoder(int maxHeaderTableSize) {
+        dynamicTable = new DynamicTable(maxHeaderTableSize);
     }
-    List<HeaderField> parsedHeaders = new ArrayList<HeaderField>();
-    ArrayValue raw_headers = raw_data.asArrayValue();
-    for (int i = 0; i < raw_headers.size(); i++) {
-      Value headerValue = raw_headers.get(i);
-      if(headerValue.isIntegerValue()) {
-        int idx = headerValue.asIntegerValue().getInt();
-        HeaderField header = get_by_index(idx);
-        parsedHeaders.add(header);
-      } else if (headerValue.getType() == ValueType.ARRAY) {
-        Value[] header_array = headerValue.asArrayValue().getElementArray();
-        if(header_array.length != 3) {
-          throw DECOMPRESSION_EXCEPTION;
-        }
-        byte[] name;
-        byte[] value;
-        if(header_array[1].isIntegerValue()) {
-          name = get_by_index(header_array[1].asIntegerValue().getInt()).name;
-        } else {
-          name = header_array[1].asRawValue().getByteArray();
-        }
-        value = header_array[2].asRawValue().getByteArray();
-        HeaderField header = new HeaderField(name, value);
-        if(header_array[0].asBooleanValue().getBoolean()) {
-          dynamicTable.add(header);
-        }
-        parsedHeaders.add(header);
-      }
-    }
-    return parsedHeaders;
-  }
 
-  private HeaderField get_by_index(int idx) {
-    if(idx <= StaticTable.length) {
-      return StaticTable.getEntry(idx);
-    } else {
-      //TODO: is it ok to make shallow copy here?
-      return dynamicTable.getEntry(idx - StaticTable.length);
-    }
-  }
+    public List<HeaderField> decode(Value rawData) throws IOException {
+        if (!rawData.isArrayValue()) {
+            throw DECOMPRESSION_EXCEPTION;
+        }
 
+        List<HeaderField> parsedHeaders = new ArrayList<>();
+
+        ArrayValue rawHeaders = rawData.asArrayValue();
+        for (Value rawHeader : rawHeaders) {
+            if (rawHeader.isIntegerValue()) {
+                int index = rawHeader.asIntegerValue().getInt();
+                HeaderField header = getByIndex(index);
+                parsedHeaders.add(header);
+            } else if (rawHeader.getType() == ValueType.ARRAY) {
+                Value[] headerArray = rawHeader.asArrayValue().getElementArray();
+                if (headerArray.length != 3) {
+                    throw DECOMPRESSION_EXCEPTION;
+                }
+                byte[] name;
+                byte[] value;
+                if (headerArray[1].isIntegerValue()) {
+                    name = getByIndex(headerArray[1].asIntegerValue().getInt()).name;
+                } else {
+                    name = headerArray[1].asRawValue().getByteArray();
+                }
+                value = headerArray[2].asRawValue().getByteArray();
+                HeaderField header = new HeaderField(name, value);
+                if (headerArray[0].asBooleanValue().getBoolean()) {
+                    dynamicTable.add(header);
+                }
+                parsedHeaders.add(header);
+            }
+        }
+        return parsedHeaders;
+    }
+
+    private HeaderField getByIndex(int idx) {
+        return idx <= StaticTable.LENGTH
+                ? StaticTable.getEntry(idx)
+                : dynamicTable.getEntry(idx - StaticTable.LENGTH);
+    }
 }

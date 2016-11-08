@@ -24,10 +24,10 @@
 
 
     <dependencies>
-    <dependency>
-        <groupId>org.msgpack</groupId>
-        <artifactId>msgpack</artifactId>
-    </dependency>
+        <dependency>
+            <groupId>org.msgpack</groupId>
+            <artifactId>msgpack</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

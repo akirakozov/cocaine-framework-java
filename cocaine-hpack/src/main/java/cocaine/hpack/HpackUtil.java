@@ -17,33 +17,31 @@ package cocaine.hpack;
 
 import java.nio.charset.Charset;
 
-final class HpackUtil {
+public final class HpackUtil {
 
-  static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
+    static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
 
-  /**
-   * A string compare that doesn't leak timing information.
-   */
-  static boolean equals(byte[] s1, byte[] s2) {
-    if (s1.length != s2.length) {
-      return false;
+    /**
+     * A string compare that doesn't leak timing information.
+     */
+    public static boolean equals(byte[] s1, byte[] s2) {
+        if (s1.length != s2.length) {
+            return false;
+        }
+        char c = 0;
+        for (int i = 0; i < s1.length; i++) {
+            c |= (s1[i] ^ s2[i]);
+        }
+        return c == 0;
     }
-    char c = 0;
-    for (int i = 0; i < s1.length; i++) {
-      c |= (s1[i] ^ s2[i]);
+
+    /**
+     * Checks that the specified object reference is not {@code null}.
+     */
+    static <T> T requireNonNull(T obj) {
+        if (obj == null) {
+            throw new NullPointerException();
+        }
+        return obj;
     }
-    return c == 0;
-  }
-
-  /**
-   * Checks that the specified object reference is not {@code null}.
-   */
-  static <T> T requireNonNull(T obj) {
-    if (obj == null)
-      throw new NullPointerException();
-    return obj;
-  }
-
-
-
 }

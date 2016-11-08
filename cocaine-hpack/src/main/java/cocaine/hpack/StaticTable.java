@@ -16,20 +16,15 @@
 package cocaine.hpack;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import static cocaine.hpack.HpackUtil.ISO_8859_1;
 
 final class StaticTable {
+    private static final String EMPTY = "";
+    private static final byte[] ZERO_INT = new byte[8];
 
-  private static final String EMPTY = "";
-  private static final byte[] ZERO_INT = new byte[8];
-
-  // Appendix A: Static Table
-  // http://tools.ietf.org/html/rfc7541#appendix-A
-  private static final List<HeaderField> STATIC_TABLE = Arrays.asList(
+    // Appendix A: Static Table
+    // http://tools.ietf.org/html/rfc7541#appendix-A
+    private static final List<HeaderField> STATIC_TABLE = Arrays.asList(
     /*  1 */ new HeaderField(":authority", EMPTY),
     /*  2 */ new HeaderField(":method", "GET"),
     /*  3 */ new HeaderField(":method", "POST"),
@@ -111,74 +106,17 @@ final class StaticTable {
     /* 80 */ new HeaderField("trace_id".getBytes(), ZERO_INT),
     /* 81 */ new HeaderField("span_id".getBytes(), ZERO_INT),
     /* 82 */ new HeaderField("parent_id".getBytes(), ZERO_INT)
-  );
+    );
 
-  private static final Map<String, Integer> STATIC_INDEX_BY_NAME = createMap();
+    /**
+     * The number of header fields in the static table.
+     */
+    static final int LENGTH = STATIC_TABLE.size();
 
-  /**
-   * The number of header fields in the static table.
-   */
-  static final int length = STATIC_TABLE.size();
-
-  /**
-   * Return the header field at the given index value.
-   */
-  static HeaderField getEntry(int index) {
-    return STATIC_TABLE.get(index - 1);
-  }
-
-  /**
-   * Returns the lowest index value for the given header field name in the static table.
-   * Returns -1 if the header field name is not in the static table.
-   */
-  static int getIndex(byte[] name) {
-    String nameString = new String(name, 0, name.length, ISO_8859_1);
-    Integer index = STATIC_INDEX_BY_NAME.get(nameString);
-    if (index == null) {
-      return -1;
+    /**
+     * Return the header field at the given index value.
+     */
+    static HeaderField getEntry(int index) {
+        return STATIC_TABLE.get(index - 1);
     }
-    return index;
-  }
-
-  /**
-   * Returns the index value for the given header field in the static table.
-   * Returns -1 if the header field is not in the static table.
-   */
-  static int getIndex(byte[] name, byte[] value) {
-    int index = getIndex(name);
-    if (index == -1) {
-      return -1;
-    }
-
-    // Note this assumes all entries for a given header field are sequential.
-    while (index <= length) {
-      HeaderField entry = getEntry(index);
-      if (!HpackUtil.equals(name, entry.name)) {
-        break;
-      }
-      if (HpackUtil.equals(value, entry.value)) {
-        return index;
-      }
-      index++;
-    }
-
-    return -1;
-  }
-
-  // create a map of header name to index value to allow quick lookup
-  private static Map<String, Integer> createMap() {
-    int length = STATIC_TABLE.size();
-    HashMap<String, Integer> ret = new HashMap<String, Integer>(length);
-    // Iterate through the static table in reverse order to
-    // save the smallest index for a given name in the map.
-    for (int index = length; index > 0; index--) {
-      HeaderField entry = getEntry(index);
-      String name = new String(entry.name, 0, entry.name.length, ISO_8859_1);
-      ret.put(name, index);
-    }
-    return ret;
-  }
-
-  // singleton
-  private StaticTable() {}
 }

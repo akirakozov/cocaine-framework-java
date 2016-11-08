@@ -21,58 +21,44 @@ import java.io.IOException;
 
 public final class Encoder {
 
-  private final DynamicTable dynamicTable;
+    private final DynamicTable dynamicTable;
 
-  /**
-   * Creates a new encoder.
-   */
-  public Encoder(int maxHeaderTableSize) {
-    dynamicTable = new DynamicTable(maxHeaderTableSize);
-  }
-
-  /**
-   * Encode the header field into the header block.
-   */
-  public void encodeHeader(Packer packer, byte[] name, byte[] value, Boolean store) throws IOException {
-    HeaderField headerField = new HeaderField(name, value);
-    Boolean written = false;
-    int name_idx = 0;
-    for(int i = 1; i <= StaticTable.length; i++) {
-      HeaderField entry = StaticTable.getEntry(i);
-      if(entry == headerField) {
-        packer.write(i);
-        break;
-      }
-      if(HpackUtil.equals(entry.name, headerField.name)) {
-        name_idx = i;
-      }
-    }
-    if(written) {
-      return;
+    public Encoder(int maxHeaderTableSize) {
+        dynamicTable = new DynamicTable(maxHeaderTableSize);
     }
 
-    for(int i = 1; i <= dynamicTable.length(); i++) {
-      HeaderField entry = dynamicTable.getEntry(i);
-      if(entry == headerField) {
-        packer.write(i);
-        break;
-      }
-      if(HpackUtil.equals(entry.name, headerField.name)) {
-        name_idx = i;
-      }
-    }
-    if(written) {
-      return;
-    }
-    packer.writeArrayBegin(3);
-    packer.write(store);
-    if(name_idx != 0) {
-      packer.write(name_idx);
-    } else {
-      packer.write(name);
-    }
-    packer.write(value);
-    packer.writeArrayEnd();
-  }
+    public void encodeHeader(Packer packer, byte[] name, byte[] value, boolean store) throws IOException {
+        HeaderField headerField = new HeaderField(name, value);
+        int nameIndex = 0;
+        for (int i = 1; i <= StaticTable.LENGTH; i++) {
+            HeaderField entry = StaticTable.getEntry(i);
+            if (entry == headerField) {
+                packer.write(i);
+                break;
+            }
+            if (HpackUtil.equals(entry.name, headerField.name)) {
+                nameIndex = i;
+            }
+        }
 
+        for (int i = 1; i <= dynamicTable.length(); i++) {
+            HeaderField entry = dynamicTable.getEntry(i);
+            if (entry == headerField) {
+                packer.write(i);
+                break;
+            }
+            if (HpackUtil.equals(entry.name, headerField.name)) {
+                nameIndex = i;
+            }
+        }
+        packer.writeArrayBegin(3);
+        packer.write(store);
+        if (nameIndex != 0) {
+            packer.write(nameIndex);
+        } else {
+            packer.write(name);
+        }
+        packer.write(value);
+        packer.writeArrayEnd();
+    }
 }
