@@ -38,31 +38,31 @@ public class RequestIdStack {
 
     public static class State {
         State previous;
-        public final int traceId;
-        public final int spanId;
-        public final int parentId;
+        public final long traceId;
+        public final long spanId;
+        public final long parentId;
 
-        public State(int traceId, int spanId, int parentId) {
+        public State(long traceId, long spanId, long parentId) {
             this.traceId = traceId;
             this.spanId = spanId;
             this.parentId = parentId;
         }
 
         public State(List<HeaderField> headers) {
-            int traceId = 0;
-            int spanId = 0;
-            int parentId = 0;
+            long traceId = 0;
+            long spanId = 0;
+            long parentId = 0;
             int found = 0;
 
             for (HeaderField h : headers) {
                 if (Arrays.equals(h.name, "trace_id".getBytes())) {
-                    traceId = HeaderField.toInt(h.value);
+                    traceId = HeaderField.toLong(h.value);
                     found++;
                 } else if (Arrays.equals(h.name, "span_id".getBytes())) {
-                    spanId = HeaderField.toInt(h.value);
+                    spanId = HeaderField.toLong(h.value);
                     found++;
                 } else if (Arrays.equals(h.name, "parent_id".getBytes())) {
-                    parentId = HeaderField.toInt(h.value);
+                    parentId = HeaderField.toLong(h.value);
                     found++;
                 }
                 if (found == 3) {

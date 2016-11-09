@@ -39,10 +39,10 @@ public class InvocationUtils {
     private static List<HeaderField> constructRequestIdHeaders() {
         List<HeaderField> headers = new ArrayList<>();
         if (!RequestIdStack.isEmpty()) {
-            RequestIdStack.State s = RequestIdStack.current.get();
-            headers.add(new HeaderField("trace_id".getBytes(), HeaderField.valueFromInt(s.traceId)));
-            headers.add(new HeaderField("span_id".getBytes(), HeaderField.valueFromInt(s.spanId)));
-            headers.add(new HeaderField("parent_id".getBytes(), HeaderField.valueFromInt(s.parentId)));
+            RequestIdStack.State currentIds = RequestIdStack.current.get();
+            headers.add(new HeaderField("trace_id".getBytes(), HeaderField.valueFromLong(currentIds.traceId)));
+            headers.add(new HeaderField("span_id".getBytes(), HeaderField.valueFromLong(currentIds.spanId)));
+            headers.add(new HeaderField("parent_id".getBytes(), HeaderField.valueFromLong(currentIds.parentId)));
         }
         return headers;
     }

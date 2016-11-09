@@ -15,6 +15,8 @@
  */
 package cocaine.hpack;
 
+import java.nio.ByteBuffer;
+
 import static cocaine.hpack.HpackUtil.ISO_8859_1;
 import static cocaine.hpack.HpackUtil.requireNonNull;
 
@@ -38,19 +40,15 @@ public class HeaderField implements Comparable<HeaderField> {
         this.value = requireNonNull(value);
     }
 
-    public static byte[] valueFromInt(int value) {
-        return new byte[]{
-                (byte) (value >>> 24),
-                (byte) (value >>> 16),
-                (byte) (value >>> 8),
-                (byte) value};
+    public static byte[] valueFromLong(long value) {
+        return ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(value).array();
     }
 
-    public static int toInt(byte[] value) {
+    public static long toLong(byte[] value) {
         if (value.length != 8) {
             return 0;
         }
-        return (value[0] << 24) + (value[1] << 16) + (value[2] << 8) + value[3];
+        return ByteBuffer.wrap(value).getLong();
     }
 
     int size() {
