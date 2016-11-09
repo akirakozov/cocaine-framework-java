@@ -3,7 +3,7 @@ package cocaine.msgpack;
 import cocaine.hpack.Decoder;
 import cocaine.hpack.Encoder;
 import cocaine.hpack.HeaderField;
-import cocaine.service.InvocationUtils;
+import cocaine.service.InvocationUtils.InvocationRequest;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.unpacker.Unpacker;
@@ -15,30 +15,23 @@ import java.util.List;
 /**
  * @author antmat
  */
-public class InvocationRequestTemplate extends AbstractTemplate<InvocationUtils.InvocationRequest> {
+public class InvocationRequestTemplate extends AbstractTemplate<InvocationRequest> {
 
     private final Encoder encoder = new Encoder(Decoder.DEFAULT_TABLE_SIZE);
 
     @Override
-    public void write(Packer packer, InvocationUtils.InvocationRequest invocationRequest, boolean b) throws IOException {
+    public void write(Packer packer, InvocationRequest invocationRequest, boolean required) throws IOException {
         List<HeaderField> headers = invocationRequest.headers;
         packer.writeArrayBegin(headers.isEmpty() ? 3 : 4);
         packer.write(invocationRequest.session);
         packer.write(invocationRequest.method);
         packer.write(invocationRequest.args);
-        if (!headers.isEmpty()) {
-            packer.writeArrayBegin(headers.size());
-            for(int i = 0; i < headers.size(); i++) {
-                HeaderField h = headers.get(i);
-                encoder.encodeHeader(packer, h.name, h.value, true);
-            }
-            packer.writeArrayEnd();
-        }
+        MsgPackUtils.packHeaders(packer, headers, encoder);
         packer.writeArrayEnd();
     }
 
     @Override
-    public InvocationUtils.InvocationRequest read(Unpacker unpacker, InvocationUtils.InvocationRequest invocationRequest, boolean b) throws IOException {
+    public InvocationRequest read(Unpacker unpacker, InvocationRequest invocationRequest, boolean required) throws IOException {
         throw new UnsupportedOperationException("Reading InvocationRequest is not supported");
     }
 }

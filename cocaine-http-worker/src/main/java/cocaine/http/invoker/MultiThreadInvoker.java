@@ -36,12 +36,9 @@ public class MultiThreadInvoker implements Invoker {
     public void invoke(String event, List<HeaderField> headers, Observable<byte[]> request, Observer<byte[]> response) throws Exception {
         EventHandler handler = provider.getHandler(event);
         if (handler != null) {
-            executor.execute( () -> {
+            executor.execute(() -> {
                 try {
-                    RequestIdStack.State state = new RequestIdStack.State(headers);
-                    if(!state.empty()) {
-                        RequestIdStack.assign(state);
-                    }
+                    RequestIdStack.set(new RequestIdStack.State(headers));
                     handler.handle(request, response);
                 } catch (Exception e) {
                     logger.warn(e, e);

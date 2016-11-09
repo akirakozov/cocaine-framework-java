@@ -1,17 +1,12 @@
 package cocaine.service;
 
-import cocaine.hpack.Encoder;
 import cocaine.hpack.HeaderField;
 import cocaine.request.RequestIdStack;
 import com.google.common.base.Joiner;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import org.apache.log4j.Logger;
-import org.msgpack.MessagePackable;
-import org.msgpack.packer.Packer;
-import org.msgpack.unpacker.Unpacker;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,17 +38,16 @@ public class InvocationUtils {
 
     private static List<HeaderField> constructRequestIdHeaders() {
         List<HeaderField> headers = new ArrayList<>();
-        if (!RequestIdStack.empty()) {
+        if (!RequestIdStack.isEmpty()) {
             RequestIdStack.State s = RequestIdStack.current.get();
-            headers.add(new HeaderField("trace_id".getBytes(), HeaderField.valueFromInt(s.trace_id)));
-            headers.add(new HeaderField("span_id".getBytes(), HeaderField.valueFromInt(s.span_id)));
-            headers.add(new HeaderField("parent_id".getBytes(), HeaderField.valueFromInt(s.parent_id)));
+            headers.add(new HeaderField("trace_id".getBytes(), HeaderField.valueFromInt(s.traceId)));
+            headers.add(new HeaderField("span_id".getBytes(), HeaderField.valueFromInt(s.spanId)));
+            headers.add(new HeaderField("parent_id".getBytes(), HeaderField.valueFromInt(s.parentId)));
         }
         return headers;
     }
 
     public static class InvocationRequest {
-
         public final int method;
         public final long session;
         public final List<Object> args;

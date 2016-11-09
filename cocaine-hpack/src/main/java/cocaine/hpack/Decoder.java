@@ -71,9 +71,9 @@ public final class Decoder {
         return parsedHeaders;
     }
 
-    private HeaderField getByIndex(int idx) {
-        return idx <= StaticTable.LENGTH
-                ? StaticTable.getEntry(idx)
-                : dynamicTable.getEntry(idx - StaticTable.LENGTH);
+    private HeaderField getByIndex(int index) {
+        return index <= StaticTable.LENGTH
+                ? StaticTable.getEntry(index)
+                : dynamicTable.getEntry(index - StaticTable.LENGTH);
     }
 }

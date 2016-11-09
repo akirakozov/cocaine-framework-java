@@ -4,7 +4,6 @@ import java.io.EOFException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import cocaine.hpack.Decoder;
 import cocaine.message.Message;
 import cocaine.msgpack.MessageTemplate;
 import io.netty.buffer.ByteBuf;
@@ -17,7 +16,6 @@ import org.msgpack.MessagePack;
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
 public class MessageDecoder extends ByteToMessageDecoder {
-
     private static final Logger logger = Logger.getLogger(MessageDecoder.class);
 
     private final MessagePack pack;
@@ -26,7 +24,6 @@ public class MessageDecoder extends ByteToMessageDecoder {
     public MessageDecoder(MessagePack pack) {
         this.pack = pack;
         this.template = new MessageTemplate();
-
     }
 
     @Override
@@ -45,5 +42,4 @@ public class MessageDecoder extends ByteToMessageDecoder {
             in.resetReaderIndex();
         }
     }
-
 }

@@ -1,9 +1,7 @@
 package cocaine.netty;
 
-import cocaine.hpack.Decoder;
-import cocaine.hpack.Encoder;
 import cocaine.msgpack.InvocationRequestTemplate;
-import cocaine.service.InvocationUtils;
+import cocaine.service.InvocationUtils.InvocationRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -14,15 +12,14 @@ import org.msgpack.MessagePack;
 /**
  * @author Anton Bobukh <abobukh@yandex-team.ru>
  */
-public class InvocationRequestEncoder extends MessageToByteEncoder<InvocationUtils.InvocationRequest> {
-
+public class InvocationRequestEncoder extends MessageToByteEncoder<InvocationRequest> {
     private static final Logger logger = Logger.getLogger(InvocationRequestEncoder.class);
 
     private final MessagePack pack;
     private final InvocationRequestTemplate template = new InvocationRequestTemplate();
 
     public InvocationRequestEncoder(MessagePack pack) {
-        super(InvocationUtils.InvocationRequest.class);
+        super(InvocationRequest.class);
         this.pack = pack;
     }
 
@@ -33,9 +30,8 @@ public class InvocationRequestEncoder extends MessageToByteEncoder<InvocationUti
     }
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, InvocationUtils.InvocationRequest msg, ByteBuf out) throws Exception {
+    protected void encode(ChannelHandlerContext ctx, InvocationRequest msg, ByteBuf out) throws Exception {
         logger.debug("Encoding message packable: " + msg);
         out.writeBytes(pack.write(msg, template));
     }
-
 }

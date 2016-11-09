@@ -47,7 +47,6 @@ public class Worker implements AutoCloseable {
 
     public Worker(WorkerOptions options, Invoker invoker) {
         this.pack = new MessagePack();
-//        this.pack.register(Message.class, MessageTemplate.getInstance());
         this.pack.register(WorkerMessage.class, WorkerMessageTemplate.getInstance());
         this.options = options;
         this.invoker = invoker;

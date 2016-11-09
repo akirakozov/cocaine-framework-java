@@ -96,6 +96,7 @@ final class StaticTable {
     /* 69 */ new HeaderField(EMPTY, EMPTY),
     /* 70 */ new HeaderField(EMPTY, EMPTY),
     /* 71 */ new HeaderField(EMPTY, EMPTY),
+    /* 72 */ new HeaderField(EMPTY, EMPTY),
     /* 73 */ new HeaderField(EMPTY, EMPTY),
     /* 74 */ new HeaderField(EMPTY, EMPTY),
     /* 75 */ new HeaderField(EMPTY, EMPTY),

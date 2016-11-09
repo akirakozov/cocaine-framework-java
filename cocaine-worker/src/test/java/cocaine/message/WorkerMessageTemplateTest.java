@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 
 import cocaine.hpack.HeaderField;
+import cocaine.msgpack.MessageTemplate;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,10 +17,24 @@ public class WorkerMessageTemplateTest {
 
     private MessagePack pack;
 
+    private List<Object> rawHeaders;
+    private List<HeaderField> headers;
+
     @Before
     public void setUp() {
-        this.pack = new MessagePack();
-        this.pack.register(UUID.class, UUIDTemplate.getInstance());
+        pack = new MessagePack();
+        pack.register(UUID.class, UUIDTemplate.getInstance());
+        pack.register(Message.class, new MessageTemplate());
+
+        rawHeaders = new ArrayList<>();
+        rawHeaders.add(Arrays.asList(true, 80, "traceeee"));
+        rawHeaders.add(Arrays.asList(true, 81, "spannnnn"));
+        rawHeaders.add(Arrays.asList(true, 82, "parenttt"));
+
+        headers = new ArrayList<>();
+        headers.add(new HeaderField("trace_id".getBytes(), "traceeee".getBytes()));
+        headers.add(new HeaderField("span_id".getBytes(), "spannnnn".getBytes()));
+        headers.add(new HeaderField("parent_id".getBytes(), "parenttt".getBytes()));
     }
 
     @Test
@@ -58,13 +73,9 @@ public class WorkerMessageTemplateTest {
     public void writeInvokeMessage() throws IOException {
         long session = 1L;
         String method = "invoke";
-        List<HeaderField> headers = new ArrayList<>();
-        headers.add(new HeaderField("trace_id".getBytes(), "qwerasdf".getBytes()));
-        headers.add(new HeaderField("span_id".getBytes(), "qwerasdf".getBytes()));
-        headers.add(new HeaderField("parent_id".getBytes(), new byte[8]));
 
         WorkerMessage msg = Messages.invoke(session, headers, method);
-        byte[] bytes = pack.write(Arrays.asList(session, 0, Arrays.asList(method), headers));
+        byte[] bytes = pack.write(Arrays.asList(session, 0, Arrays.asList(method), rawHeaders));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
@@ -75,13 +86,9 @@ public class WorkerMessageTemplateTest {
     public void writeWriteMessage() throws IOException {
         long session = 1L;
         byte[] data = new byte[] { 1, 2, 3, 4, 5 };
-        List<HeaderField> headers = new ArrayList<>();
-        headers.add(new HeaderField("trace_id".getBytes(), "qwerasdf".getBytes()));
-        headers.add(new HeaderField("span_id".getBytes(), "qwerasdf".getBytes()));
-        headers.add(new HeaderField("parent_id".getBytes(), new byte[8]));
 
         WorkerMessage msg = Messages.write(session, data, headers);
-        byte[] bytes = pack.write(Arrays.asList(session, 0, Collections.singletonList(data), headers));
+        byte[] bytes = pack.write(Arrays.asList(session, 0, Collections.singletonList(data), rawHeaders));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
@@ -91,17 +98,13 @@ public class WorkerMessageTemplateTest {
     @Test
     public void writeErrorMessage() throws IOException {
         long session = 1L;
-        List<HeaderField> headers = new ArrayList<>();
-        headers.add(new HeaderField("trace_id".getBytes(), "qwerasdf".getBytes()));
-        headers.add(new HeaderField("span_id".getBytes(), "qwerasdf".getBytes()));
-        headers.add(new HeaderField("parent_id".getBytes(), new byte[8]));
 
         int category = 1;
         int code = -200;
         String message = "Failed!";
 
         WorkerMessage msg = Messages.error(session, headers, category, code, message);
-        byte[] bytes = pack.write(Arrays.asList(session, 1, Arrays.asList(Arrays.asList(category, code), message), headers));
+        byte[] bytes = pack.write(Arrays.asList(session, 1, Arrays.asList(Arrays.asList(category, code), message), rawHeaders));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 
@@ -111,13 +114,9 @@ public class WorkerMessageTemplateTest {
     @Test
     public void writeCloseMessage() throws IOException {
         long session = 1L;
-        List<HeaderField> headers = new ArrayList<>();
-        headers.add(new HeaderField("trace_id".getBytes(), "qwerasdf".getBytes()));
-        headers.add(new HeaderField("span_id".getBytes(), "qwerasdf".getBytes()));
-        headers.add(new HeaderField("parent_id".getBytes(), new byte[8]));
 
         WorkerMessage msg = Messages.close(session, headers);
-        byte[] bytes = pack.write(Arrays.asList(session, 2, Arrays.asList(), headers));
+        byte[] bytes = pack.write(Arrays.asList(session, 2, Arrays.asList(), rawHeaders));
 
         byte[] result = pack.write(msg, WorkerMessageTemplate.getInstance());
 

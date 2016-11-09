@@ -1,7 +1,12 @@
 package cocaine.message;
 
 import java.io.IOException;
+import java.util.List;
 
+import cocaine.hpack.Decoder;
+import cocaine.hpack.Encoder;
+import cocaine.hpack.HeaderField;
+import cocaine.msgpack.MsgPackUtils;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
@@ -20,9 +25,13 @@ public final class WorkerMessageTemplate extends AbstractTemplate<WorkerMessage>
         return instance;
     }
 
+    private final Encoder encoder = new Encoder(Decoder.DEFAULT_TABLE_SIZE);
+
     @Override
     public void write(Packer packer, WorkerMessage message, boolean required) throws IOException {
-        packer.writeArrayBegin(message.getHeaders().isEmpty() ? 3 : 4);
+        List<HeaderField> headers = message.getHeaders();
+
+        packer.writeArrayBegin(headers.isEmpty() ? 3 : 4);
         packer.write(message.getSession());
         packer.write(message.getType().value());
 
@@ -75,9 +84,7 @@ public final class WorkerMessageTemplate extends AbstractTemplate<WorkerMessage>
             }
         }
 
-        if (!message.getHeaders().isEmpty()) {
-            packer.write(message.getHeaders());
-        }
+        MsgPackUtils.packHeaders(packer, headers, encoder);
 
         packer.writeArrayEnd();
     }

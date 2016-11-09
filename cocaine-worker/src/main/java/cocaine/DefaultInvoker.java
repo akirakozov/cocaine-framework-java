@@ -23,10 +23,7 @@ public class DefaultInvoker implements Invoker {
         EventHandler handler = provider.getHandler(event);
         if (handler != null) {
             try {
-                RequestIdStack.State state = new RequestIdStack.State(headers);
-                if(!state.empty()) {
-                    RequestIdStack.assign(state);
-                }
+                RequestIdStack.set(new RequestIdStack.State(headers));
                 handler.handle(request, response);
             } finally {
                 RequestIdStack.pop();
