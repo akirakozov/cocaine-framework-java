@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>cocaine</artifactId>
         <groupId>ru.yandex</groupId>
+        <artifactId>cocaine</artifactId>
         <version>0.12.0.1-SNAPSHOT</version>
     </parent>
 

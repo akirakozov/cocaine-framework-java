@@ -12,6 +12,10 @@ public class RequestIdStack {
 
     public static final ThreadLocal<State> current = new ThreadLocal<>();
 
+    public static State get() {
+        return current.get();
+    }
+
     public static void set(State state) {
         current.set(state);
     }
