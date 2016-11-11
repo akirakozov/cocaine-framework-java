@@ -27,7 +27,7 @@ public class RequestIdStack {
     public static void push() {
         State currentState = current.get();
         if (currentState != null) {
-            State newState = new State(currentState.traceId, random.nextInt(), currentState.spanId);
+            State newState = new State(currentState.traceId, random.nextLong(), currentState.spanId);
             newState.previous = current.get();
             current.set(newState);
         }
