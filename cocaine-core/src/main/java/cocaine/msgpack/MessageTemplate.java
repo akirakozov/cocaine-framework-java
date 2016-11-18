@@ -49,6 +49,8 @@ public final class MessageTemplate extends AbstractTemplate<Message> {
             headers = new ArrayList<>();
         }
 
+        unpacker.readArrayEnd();
+
         return new Message(messageType, session, payload, headers);
     }
 }
