@@ -3,7 +3,7 @@ package cocaine.msgpack;
 import cocaine.hpack.Decoder;
 import cocaine.hpack.Encoder;
 import cocaine.hpack.HeaderField;
-import cocaine.service.InvocationUtils.InvocationRequest;
+import cocaine.service.invocation.InvocationRequest;
 import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.unpacker.Unpacker;

@@ -7,6 +7,8 @@ import cocaine.msgpack.ServiceInfoTemplate;
 import cocaine.service.Service;
 import cocaine.service.ServiceOptions;
 import cocaine.service.ServiceSpecification;
+import cocaine.service.invocation.AdditionalHeadersAppender;
+import cocaine.service.invocation.IdentityHeadersAppender;
 import cocaine.session.Session;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
 import cocaine.session.protocol.DefaultCocaineProtocolRegistry;
@@ -82,12 +84,18 @@ public final class Locator implements AutoCloseable {
         return new Locator(endpoint, pack);
     }
 
-    public Service service(final String name, final ServiceOptions options) {
-        return createService(name, options, DefaultCocaineProtocolRegistry.getDefaultRegistry());
+    public Service service(final String name, final ServiceOptions options, final AdditionalHeadersAppender appender) {
+        return createService(name, options, DefaultCocaineProtocolRegistry.getDefaultRegistry(), appender);
     }
 
     public Service service(final String name, final ServiceOptions options, final CocaineProtocolsRegistry registry) {
-        return createService(name, options, registry);
+        return createService(name, options, registry, new IdentityHeadersAppender());
+    }
+
+    public Service service(final String name, final ServiceOptions options, final CocaineProtocolsRegistry registry,
+            final AdditionalHeadersAppender appender)
+    {
+        return createService(name, options, registry, appender);
     }
 
     @Override
@@ -104,14 +112,14 @@ public final class Locator implements AutoCloseable {
     }
 
     private Service createService(final String name, final ServiceOptions options,
-            final CocaineProtocolsRegistry registry)
+            final CocaineProtocolsRegistry registry, final AdditionalHeadersAppender appender)
     {
         logger.info("Creating service " + name);
         // TODO: use all endpoints instead of only first
         ServiceInfo info = resolve(name);
         ServiceSpecification specs = new ServiceSpecification(name, () -> info.getEndpoints().get(0),
                 createSeparateEventLoop(), pack, registry);
-        return Service.create(info.getApi(), specs, options);
+        return Service.create(info.getApi(), specs, options, appender);
     }
 
     private ServiceInfo resolve(String name) {

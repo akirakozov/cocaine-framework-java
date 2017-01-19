@@ -3,7 +3,8 @@ package cocaine.session;
 import cocaine.ServiceException;
 import cocaine.UnknownServiceMethodException;
 import cocaine.api.TransactionTree;
-import cocaine.service.InvocationUtils;
+import cocaine.service.invocation.AdditionalHeadersAppender;
+import cocaine.service.invocation.InvocationUtils;
 import io.netty.channel.Channel;
 import org.apache.log4j.Logger;
 
@@ -18,13 +19,17 @@ public class TransmitChannel {
 
     private final long sessionId;
     private final Channel channel;
+    private final AdditionalHeadersAppender appender;
     private final String serviceName;
     private TransactionTree txTree;
     private final AtomicBoolean isDone;
 
-    public TransmitChannel(String serviceName, TransactionTree txTree, Channel channel, long sessionId) {
+    public TransmitChannel(String serviceName, TransactionTree txTree, Channel channel, long sessionId,
+            AdditionalHeadersAppender appender)
+    {
         this.serviceName = serviceName;
         this.channel = channel;
+        this.appender = appender;
         this.sessionId = sessionId;
         this.txTree = txTree;
         this.isDone = new AtomicBoolean(false);
@@ -35,7 +40,7 @@ public class TransmitChannel {
 
         int msgId = txTree.getMessageId(methodType)
                 .orElseThrow(() -> new UnknownServiceMethodException(serviceName, methodType));
-        InvocationUtils.invokeAndFlush(channel, sessionId, msgId, args);
+        InvocationUtils.invokeAndFlush(channel, sessionId, msgId, args, appender);
         TransactionTree.TransactionInfo info = txTree.getInfo(methodType)
                 .orElseThrow(() -> new UnknownServiceMethodException(serviceName, methodType));
         if (!info.getTree().isCycle()) {

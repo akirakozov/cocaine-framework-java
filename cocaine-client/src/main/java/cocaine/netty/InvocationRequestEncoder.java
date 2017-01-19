@@ -1,7 +1,7 @@
 package cocaine.netty;
 
 import cocaine.msgpack.InvocationRequestTemplate;
-import cocaine.service.InvocationUtils.InvocationRequest;
+import cocaine.service.invocation.InvocationRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;

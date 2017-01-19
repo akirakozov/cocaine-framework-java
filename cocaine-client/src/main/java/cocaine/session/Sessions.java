@@ -2,6 +2,7 @@ package cocaine.session;
 
 import cocaine.api.TransactionTree;
 import cocaine.message.Message;
+import cocaine.service.invocation.AdditionalHeadersAppender;
 import cocaine.session.protocol.CocaineProtocol;
 import cocaine.session.protocol.CocaineProtocolsRegistry;
 import io.netty.channel.Channel;
@@ -26,13 +27,17 @@ public class Sessions {
     private final String service;
     private final long readTimeoutInMs;
     private final CocaineProtocolsRegistry protocolsRegistry;
+    private final AdditionalHeadersAppender appender;
 
-    public Sessions(String service, long readTimeoutInMs, CocaineProtocolsRegistry protocolsRegistry) {
+    public Sessions(String service, long readTimeoutInMs, CocaineProtocolsRegistry protocolsRegistry,
+            AdditionalHeadersAppender appender)
+    {
         this.service = service;
         this.readTimeoutInMs = readTimeoutInMs;
         this.counter = new AtomicLong(1);
         this.sessions = new ConcurrentHashMap<>();
         this.protocolsRegistry = protocolsRegistry;
+        this.appender = appender;
     }
 
     public String getService() {
@@ -48,7 +53,7 @@ public class Sessions {
         logger.debug("Creating new session: " + id);
         CocaineProtocol protocol = protocolsRegistry.findProtocol(rx);
         Session session = new Session(id, service, rx, tx, readTimeoutInMs, protocol, this,
-                channel, closeChannelCallbackToRunnable(closeChannelCallback, channel), deserializer);
+                channel, closeChannelCallbackToRunnable(closeChannelCallback, channel), appender, deserializer);
         sessions.put(id, session);
         return session;
     }

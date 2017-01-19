@@ -4,6 +4,9 @@ import cocaine.CocaineException;
 import cocaine.api.ServiceApi;
 import cocaine.api.TransactionTree;
 import cocaine.netty.channel.CocaineChannelPoolFactory;
+import cocaine.service.invocation.AdditionalHeadersAppender;
+import cocaine.service.invocation.IdentityHeadersAppender;
+import cocaine.service.invocation.InvocationUtils;
 import cocaine.session.*;
 import cocaine.session.protocol.PrimitiveProtocol;
 import io.netty.channel.*;
@@ -28,20 +31,29 @@ public class Service implements AutoCloseable {
 
     private AtomicBoolean closed;
     private final ServiceOptions options;
+    private final AdditionalHeadersAppender appender;
 
-    private Service(ServiceApi api, ServiceSpecification specs, ServiceOptions options)
+    private Service(ServiceApi api, ServiceSpecification specs, ServiceOptions options,
+            AdditionalHeadersAppender appender)
     {
-        this.sessions = new Sessions(specs.name, options.readTimeoutInMs, specs.protocolsRegistry);
+        this.sessions = new Sessions(specs.name, options.readTimeoutInMs, specs.protocolsRegistry, appender);
         this.api = api;
         this.channelPool = new CocaineChannelPoolFactory()
                 .getChannelPool(specs, sessions, options.maxNumberOfOpenChannels);
 
         this.closed = new AtomicBoolean(false);
         this.options = options;
+        this.appender = appender;
     }
 
     public static Service create(ServiceApi api, ServiceSpecification specs, ServiceOptions options) {
-        return new Service(api, specs, options);
+        return create(api, specs, options, new IdentityHeadersAppender());
+    }
+
+    public static Service create(ServiceApi api, ServiceSpecification specs, ServiceOptions options,
+            AdditionalHeadersAppender appender)
+    {
+        return new Service(api, specs, options, appender);
     }
 
     public Session<Value> invoke(String method, List<Object> args) {
@@ -57,9 +69,9 @@ public class Service implements AutoCloseable {
                 channelPool::release,
                 deserializer);
         if (options.immediatelyFlushAllInvocations) {
-            InvocationUtils.invokeAndFlush(session.getChannel(), session.getId(), api.getMessageId(method), args);
+            InvocationUtils.invokeAndFlush(session.getChannel(), session.getId(), api.getMessageId(method), args, appender);
         } else {
-            InvocationUtils.invoke(session.getChannel(), session.getId(), api.getMessageId(method), args);
+            InvocationUtils.invoke(session.getChannel(), session.getId(), api.getMessageId(method), args, appender);
         }
 
         return session;

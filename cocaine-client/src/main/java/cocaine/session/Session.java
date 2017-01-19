@@ -1,6 +1,7 @@
 package cocaine.session;
 
 import cocaine.api.TransactionTree;
+import cocaine.service.invocation.AdditionalHeadersAppender;
 import cocaine.session.protocol.CocaineProtocol;
 import io.netty.channel.Channel;
 
@@ -24,13 +25,14 @@ public class Session<T> implements AutoCloseable {
             Sessions sessions,
             Channel channel,
             Runnable closeChannelCallback,
+            AdditionalHeadersAppender appender,
             CocainePayloadDeserializer deserializer)
     {
         this.channel = channel;
         this.closeChannelCallback = closeChannelCallback;
         this.id = id;
         this.rx = new ReceiveChannel(serviceName, rx, protocol, deserializer, readTimeoutInMs);
-        this.tx = new TransmitChannel(serviceName, tx, channel, id);
+        this.tx = new TransmitChannel(serviceName, tx, channel, id, appender);
         this.sessions = sessions;
     }
 

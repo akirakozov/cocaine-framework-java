@@ -4,6 +4,8 @@ import cocaine.*;
 import cocaine.annotations.CocaineMethod;
 import cocaine.annotations.CocaineService;
 import cocaine.locator.Locator;
+import cocaine.service.invocation.AdditionalHeadersAppender;
+import cocaine.service.invocation.IdentityHeadersAppender;
 import cocaine.session.CocainePayloadDeserializer;
 import cocaine.session.Session;
 import com.google.common.base.Preconditions;
@@ -53,16 +55,25 @@ public class ServiceFactory {
     }
 
     public <T extends AutoCloseable> T createService(Class<T> type) {
-        return createService(type, new ServiceOptions());
+        return createService(type, new ServiceOptions(), new IdentityHeadersAppender());
     }
 
     public <T extends AutoCloseable> T createService(Class<T> type, ServiceOptions options) {
-        Service service = locator.service(getServiceName(type), options);
+        Service service = locator.service(getServiceName(type), options, new IdentityHeadersAppender());
         return create(type, new ServiceMethodHandler(service));
     }
 
-    public <T extends AutoCloseable> T createApp(Class<T> type, ServiceOptions options) {
-        Service service = locator.service(getServiceName(type), options);
+    public <T extends AutoCloseable> T createService(Class<T> type, ServiceOptions options,
+            AdditionalHeadersAppender appender)
+    {
+        Service service = locator.service(getServiceName(type), options, appender);
+        return create(type, new ServiceMethodHandler(service));
+    }
+
+    public <T extends AutoCloseable> T createApp(Class<T> type, ServiceOptions options,
+            AdditionalHeadersAppender appender)
+    {
+        Service service = locator.service(getServiceName(type), options, appender);
         return create(type, new AppServiceMethodHandler(service));
     }
 

@@ -12,7 +12,7 @@ import java.util.Map;
 @CocaineService("tvm")
 public interface Tvm extends AutoCloseable {
     @CocaineMethod("ticket")
-    Session<String> ticket(String grantType, Map<String, String> options);
+    Session<String> ticket(String grantType, Map<String, String> parameters);
 
     @Override
     void close();

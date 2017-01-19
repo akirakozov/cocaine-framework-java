@@ -1,20 +1,25 @@
 package cocaine.tvm;
 
 import cocaine.hpack.HeaderField;
+import cocaine.service.invocation.AdditionalHeadersAppender;
 
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * @author metal
  */
-public class TvmHeaderAppender {
-    public static Function<List<HeaderField>, List<HeaderField>> appendTvmHeaderF(TvmTicketHolder tvmTicketHolder) {
-        return (List<HeaderField> headers) -> {
-            headers.add(new HeaderField(
-                    "authorization".getBytes(),
-                    tvmTicketHolder.getCurrentTvmTicket().getTicket().getBytes()));
-            return headers;
-        };
+public class TvmHeaderAppender extends AdditionalHeadersAppender {
+    private final TvmTicketHolder tvmTicketHolder;
+
+    public TvmHeaderAppender(TvmTicketHolder tvmTicketHolder) {
+        this.tvmTicketHolder = tvmTicketHolder;
+    }
+
+    @Override
+    public List<HeaderField> apply(List<HeaderField> headers) {
+        headers.add(new HeaderField(
+                "authorization".getBytes(),
+                tvmTicketHolder.getCurrentTvmTicket().getTicket().getBytes()));
+        return headers;
     }
 }
