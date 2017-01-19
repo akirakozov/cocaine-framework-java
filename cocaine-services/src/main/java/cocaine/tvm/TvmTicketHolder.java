@@ -32,7 +32,7 @@ public class TvmTicketHolder {
 
     public void updateTicket() {
         if (enabled) {
-            current = new TvmTicket(tvm.ticket(current.getGrantType(), current.getOptions()).rx().get());
+            current = new TvmTicket(tvm.ticket(current.getGrantType(), current.getParameters()).rx().get());
         }
     }
 }

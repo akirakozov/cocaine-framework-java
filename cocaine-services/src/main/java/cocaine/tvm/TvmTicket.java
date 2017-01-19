@@ -8,11 +8,11 @@ import java.util.Map;
  */
 public class TvmTicket {
     private final String grantType;
-    private final Map<String, String> options;
+    private final Map<String, String> parameters;
 
-    public TvmTicket(String grantType, Map<String, String> options) {
+    public TvmTicket(String grantType, Map<String, String> parameters) {
         this.grantType = grantType;
-        this.options = options;
+        this.parameters = parameters;
     }
 
     public TvmTicket(String ticketOption) {
@@ -20,26 +20,26 @@ public class TvmTicket {
 
         Map<String, String> options = new HashMap<>();
         options.put(TicketOptions.TICKET.name().toLowerCase(), ticketOption);
-        this.options = options;
+        this.parameters = options;
     }
 
     public String getGrantType() {
         return grantType;
     }
 
-    public Map<String, String> getOptions() {
-        return options;
+    public Map<String, String> getParameters() {
+        return parameters;
     }
 
     public String getTicket() {
-        return options.get(TicketOptions.TICKET.name().toLowerCase());
+        return parameters.get(TicketOptions.TICKET.name().toLowerCase());
     }
 
     public enum TicketGrantTypes {
-        TICKET
+        TICKET, OAUTH
     }
 
     public enum TicketOptions {
-        TICKET
+        TICKET, USERIP, OAUTH_TOKEN
     }
 }
