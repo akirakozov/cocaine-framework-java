@@ -17,9 +17,10 @@ public class TvmHeaderAppender extends AdditionalHeadersAppender {
 
     @Override
     public List<HeaderField> apply(List<HeaderField> headers) {
-        headers.add(new HeaderField(
-                "authorization".getBytes(),
-                tvmTicketHolder.getCurrentTvmTicket().getTicket().getBytes()));
+        TvmTicket currentTvmTicket = tvmTicketHolder.getCurrentTvmTicket();
+        if (currentTvmTicket != null) {
+            headers.add(new HeaderField("authorization".getBytes(), currentTvmTicket.getTicket().getBytes()));
+        }
         return headers;
     }
 }
