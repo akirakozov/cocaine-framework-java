@@ -52,8 +52,12 @@ public class StorageResponseTemplate extends AbstractTemplate<StorageResponse> {
         } else if (type == ValueType.ARRAY) {
             ArrayValue arrayValue = (ArrayValue) unpacker.readValue();
 
-            StorageErrorType storageErrorType = StorageErrorType.byOrdinal(arrayValue.get(1).asIntegerValue().getInt());
-            throw new StorageResponseError(STORAGE_SERVICE_NAME, storageErrorType);
+            int errorCode = arrayValue.get(0).asArrayValue().get(1).asIntegerValue().getInt();
+            StorageErrorType storageErrorType = StorageErrorType.byOrdinal(errorCode);
+
+            String message = arrayValue.size() == 2 ? arrayValue.get(1).toString() : "";
+
+            throw new StorageResponseError(STORAGE_SERVICE_NAME, storageErrorType, message);
         } else {
             throw new IllegalArgumentException("Can't parse storage response");
         }
