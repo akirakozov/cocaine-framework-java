@@ -1,15 +1,17 @@
 package cocaine.unistorage;
 
+import java.util.Optional;
+
 /**
  * @author metal
  */
 public class FileMetaResponse extends StorageResponse {
     private final String attributes;
     private final String key;
-    private final long size;
-    private final long timestamp;
+    private final Optional<Long> size;
+    private final Optional<Long> timestamp;
 
-    public FileMetaResponse(String attributes, String key, long size, long timestamp) {
+    public FileMetaResponse(String attributes, String key, Optional<Long> size, Optional<Long> timestamp) {
         this.attributes = attributes;
         this.key = key;
         this.size = size;
@@ -24,11 +26,11 @@ public class FileMetaResponse extends StorageResponse {
         return key;
     }
 
-    public long getSize() {
+    public Optional<Long> getSizeO() {
         return size;
     }
 
-    public long getTimestamp() {
+    public Optional<Long> getTimestampO() {
         return timestamp;
     }
 

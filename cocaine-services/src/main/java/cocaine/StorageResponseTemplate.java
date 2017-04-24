@@ -1,5 +1,8 @@
 package cocaine;
 
+import java.io.IOException;
+import java.util.Optional;
+
 import cocaine.unistorage.DataResponse;
 import cocaine.unistorage.FileMetaResponse;
 import cocaine.unistorage.StorageResponse;
@@ -9,12 +12,12 @@ import org.msgpack.packer.Packer;
 import org.msgpack.template.AbstractTemplate;
 import org.msgpack.template.Template;
 import org.msgpack.type.ArrayValue;
+import org.msgpack.type.IntegerValue;
 import org.msgpack.type.MapValue;
+import org.msgpack.type.Value;
 import org.msgpack.type.ValueFactory;
 import org.msgpack.type.ValueType;
 import org.msgpack.unpacker.Unpacker;
-
-import java.io.IOException;
 
 /**
  * @author metal
@@ -45,8 +48,9 @@ public class StorageResponseTemplate extends AbstractTemplate<StorageResponse> {
             return new FileMetaResponse(
                     mapValue.get(ValueFactory.createRawValue("attributes")).toString(),
                     mapValue.get(ValueFactory.createRawValue("key")).toString(),
-                    mapValue.get(ValueFactory.createRawValue("size")).asIntegerValue().getLong(),
-                    mapValue.get(ValueFactory.createRawValue("timestamp_ms")).asIntegerValue().getLong());
+                    toOptionalLong(mapValue.get(ValueFactory.createRawValue("size"))),
+                    toOptionalLong(mapValue.get(ValueFactory.createRawValue("timestamp_ms")))
+            );
         } else if (type == ValueType.RAW) {
             return new DataResponse(unpacker.readByteArray());
         } else if (type == ValueType.ARRAY) {
@@ -61,5 +65,11 @@ public class StorageResponseTemplate extends AbstractTemplate<StorageResponse> {
         } else {
             throw new IllegalArgumentException("Can't parse storage response");
         }
+    }
+
+    private static Optional<Long> toOptionalLong(Value value) {
+        return Optional.ofNullable(value)
+                .map(Value::asIntegerValue)
+                .map(IntegerValue::getLong);
     }
 }
